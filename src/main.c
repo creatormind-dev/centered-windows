@@ -1,4 +1,7 @@
 #define STRICT
+// #define DEBUG // Uncomment this to enable debug messages. Useful to get the window titles.
+// #define WHITELIST // Uncomment this to switch the blacklist to a whitelist.
+#define MAX_LINE_LENGTH 256
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -10,6 +13,7 @@
 
 #pragma region Forward Declarations
 
+void read_blacklist (void);
 boolean is_valid_window (HWND);
 BOOL CALLBACK window_callback (HWND, LPARAM);
 BOOL CALLBACK monitor_callback (HMONITOR, HDC, LPRECT, LPARAM);
@@ -17,24 +21,86 @@ BOOL CALLBACK monitor_callback (HMONITOR, HDC, LPRECT, LPARAM);
 #pragma endregion
 #pragma region Global Variables
 
+const char BLACKLIST_FILENAME[] = "blacklist.txt";
+
 Monitor** monitors = NULL;
-short monitor_count = 0;
+char** blacklist = NULL;
+unsigned short monitor_count = 0;
+unsigned short blacklist_entries = 0;
 
 #pragma endregion
 
 
 int main (int argc, char* argv[]) {
+	read_blacklist();
+
 	// Iterates through all monitors and windows, calling their respective callbacks.
 	EnumDisplayMonitors(NULL, NULL, monitor_callback, 0);
 	EnumWindows(window_callback, 0);
 
 	free(monitors);
 
+#ifdef DEBUG
+	system("pause");
+#endif // DEBUG
+
 	return 0;
 }
 
 
 #pragma region Function Definitions
+
+/**
+ * Reads the blacklist file (if any) and populates the blacklist array with the entries.
+ * @param blacklist An array of strings to populate with the entries from the blacklist file.
+ * @return The number of entries in the blacklist array (0 if the file doesn't exist).
+*/
+void read_blacklist (void) {
+	FILE* file = NULL;
+	char line[MAX_LINE_LENGTH];
+
+	// Open the blacklist file.
+	fopen_s(&file, BLACKLIST_FILENAME, "r");
+
+	// File doesn't exist, bye bye.
+	if (file == NULL) {
+#ifdef DEBUG
+		printf("Failed to open blacklist file: %s.\n", BLACKLIST_FILENAME);
+#endif // DEBUG
+
+		return;
+	}
+
+	// Count the number of lines in the file.
+	while (fgets(line, MAX_LINE_LENGTH, file) != NULL)
+		blacklist_entries++;
+
+	// Allocate the memory for the blacklist array.
+	blacklist = (char**) malloc(sizeof(char*) * blacklist_entries);
+
+	if (blacklist == NULL) {
+#ifdef DEBUG
+		printf("Failed to allocate memory for blacklist array.\n");
+#endif // DEBUG
+
+		return;
+	}
+
+	// Reset the file pointer to the beginning of the file.
+	fseek(file, 0, SEEK_SET);
+
+	// Populate the blacklist array with the entries from the file.
+	for (int i = 0; i < blacklist_entries; i++) {
+		fgets(line, MAX_LINE_LENGTH, file);
+
+		blacklist[i] = (char*) malloc(sizeof(char) * MAX_LINE_LENGTH);
+
+		strcpy_s(blacklist[i], MAX_LINE_LENGTH, line);
+	}
+
+	// Close the file.
+	fclose(file);
+}
 
 /**
  * Checks multiple conditions to determine if a window is valid to be centered.
@@ -78,7 +144,23 @@ boolean is_valid_window (Window* window) {
 	if (window->width >= monitor->width && window->height >= monitor->height)
 		return FALSE;
 
+#ifdef WHITELIST
+	// Check if the window's title is in the whitelist.
+	for (int i = 0; i < blacklist_entries; i++) {
+		if (strncmp(window->title, blacklist[i], strlen(window->title)) == 0)
+			return TRUE;
+	}
+
+	return FALSE;
+#else
+	// Check if the window's title is in the blacklist.
+	for (int i = 0; i < blacklist_entries; i++) {
+		if (strncmp(window->title, blacklist[i], strlen(window->title)) == 0)
+			return FALSE;
+	}
+
 	return TRUE;
+#endif // WHITELIST
 }
 
 /**
@@ -103,6 +185,10 @@ BOOL CALLBACK monitor_callback (HMONITOR handle, HDC hdc, LPRECT rect, LPARAM lP
 	// Reallocate the memory for the array of monitors and add the new monitor to it.
 	monitors = (Monitor**) realloc(monitors, sizeof(Monitor*) * (monitor_count + 1));
 	monitors[monitor_count++] = monitor;
+
+#ifdef DEBUG
+	printf("Monitor: %d, %d, %d, %d\n", monitor->x, monitor->y, monitor->width, monitor->height);
+#endif // DEBUG
 
 	return TRUE;
 }
@@ -135,8 +221,13 @@ BOOL CALLBACK window_callback (HWND handle, LPARAM lParam) {
 	window = new_window(handle, &rect, monitor);
 
 	// If the window is valid, center it.
-	if (is_valid_window(window))
+	if (is_valid_window(window)) {
+#ifdef DEBUG
+		printf("Wnd: %s\n", window->title);
+#endif // DEBUG
+
 		center_window(window);
+	}
 
 	free(window);
 

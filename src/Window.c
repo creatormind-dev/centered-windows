@@ -25,5 +25,5 @@ void center_window (Window* window) {
 	unsigned int x = monitor->x + (monitor->width / 2) - (window->width / 2);
 	unsigned int y = monitor->y + (monitor->height / 2) - (window->height / 2);
 
-	SetWindowPos(window->handle, HWND_TOP, x, y, window->width, window->height, SWP_NOSIZE);
+	SetWindowPos(window->handle, NULL, x, y, window->width, window->height, SWP_NOSIZE);
 }
