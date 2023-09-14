@@ -1,4 +1,4 @@
-#include "Monitor.h"
+#include "monitor.h"
 
 
 Monitor* new_monitor (HMONITOR handle, LPCRECT rect) {

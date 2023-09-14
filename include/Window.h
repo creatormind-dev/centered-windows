@@ -6,7 +6,7 @@
 #endif // _WINDOWS_
 
 #ifndef _MONITOR_H
-#include "Monitor.h"
+#include "monitor.h"
 #endif // _MONITOR_H
 
 

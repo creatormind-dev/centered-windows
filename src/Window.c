@@ -1,4 +1,4 @@
-#include "Window.h"
+#include "window.h"
 
 
 Window* new_window (HWND handle, LPCRECT rect, Monitor* monitor) {

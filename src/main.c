@@ -14,7 +14,7 @@
 #pragma region Forward Declarations
 
 void read_blacklist (void);
-boolean is_valid_window (HWND);
+boolean is_valid_window (Window*);
 BOOL CALLBACK window_callback (HWND, LPARAM);
 BOOL CALLBACK monitor_callback (HMONITOR, HDC, LPRECT, LPARAM);
 
@@ -39,6 +39,7 @@ int main (int argc, char* argv[]) {
 	EnumWindows(window_callback, 0);
 
 	free(monitors);
+	free(blacklist);
 
 #ifdef DEBUG
 	system("pause");
