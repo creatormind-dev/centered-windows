@@ -19,8 +19,8 @@ RESOURCE_OBJ = $(BIN_DIR)/resources.o
 EXECUTABLE := Centered Windows
 
 # Build rule
-$(BIN_DIR)/$(EXECUTABLE): $(OBJECTS) $(RESOURCE_OBJ)
-	$(CC) $(CFLAGS) -o "$(BIN_DIR)/$(EXECUTABLE)" $^
+$(EXECUTABLE): $(OBJECTS) $(RESOURCE_OBJ)
+	$(CC) $(CFLAGS) -o "$(EXECUTABLE)" $^
 
 # Object files rule
 $(BIN_DIR)/%.o: $(SRC_DIR)/%.c $(HEADERS)
@@ -32,4 +32,4 @@ $(RESOURCE_OBJ): $(RESOURCE)
 
 # Clean rule
 clean:
-	rm -f $(BIN_DIR)/*.o "$(BIN_DIR)/$(EXECUTABLE)" $(RESOURCE_OBJ)
+	rm -f $(BIN_DIR)/*.o "$(EXECUTABLE)" $(RESOURCE_OBJ)
