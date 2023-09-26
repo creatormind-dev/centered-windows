@@ -23,7 +23,7 @@ typedef struct {
 } DisplayMonitor;
 
 
-BOOL GetDisplayMonitor (HMONITOR, DisplayMonitor*);
+BOOL GetDisplayMonitor (HMONITOR hMonitor, DisplayMonitor* monitor);
 
 
 #endif // _DISPLAYMONITOR_H
