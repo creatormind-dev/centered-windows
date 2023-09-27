@@ -29,7 +29,7 @@ BOOL CALLBACK WindowEnumProc (HWND hWnd, LPARAM lParam) {
 		PASS;
 
 	for (int i = 0; i < blacklistEntries; i++) {
-		if (_tcsncmp(exeName, blacklist[i], MAX_PATH) == 0)
+		if (_tcsncmp(exeName, blacklist[i], _tcslen(exeName)) == 0)
 			PASS;
 	}
 
