@@ -14,7 +14,10 @@ BOOL GetDisplayMonitor (HMONITOR hMonitor, DisplayMonitor* monitor) {
 	if (GetMonitorInfo(hMonitor, &mInfo) == FALSE)
 		return FALSE;
 
+	// The base rectangle represents the real dimensions of the display.
 	const RECT baseRect = mInfo.rcMonitor;
+	// The work rectangle represents the maximum available space in the screen.
+	// Can also be seen as the dimensions of a maximized window.
 	const RECT workRect = mInfo.rcWork;
 
 	monitor->width = baseRect.right - baseRect.left;

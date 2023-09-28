@@ -1,6 +1,7 @@
 #include "WindowBlacklist.h"
 
-
+// Modifies the blacklist array with all the entries in the blacklist, one entry per line.
+// Returns the amount of entries in the blacklist, or -1 if the blacklist isn't found.
 int ReadWindowBlacklist (const TCHAR* filename, TCHAR blacklist[][MAX_BLACKLIST_ENTRIES], int maxEntrySize) {
 	FILE* file = NULL;
 	TCHAR line[MAX_LINE_LENGTH];

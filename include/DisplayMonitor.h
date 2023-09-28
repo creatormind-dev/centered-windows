@@ -6,6 +6,7 @@
 #endif // _WINDOWS_
 
 
+// Represents basic information of a detected screen display.
 typedef struct {
 
 	HMONITOR handle;

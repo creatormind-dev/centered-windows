@@ -15,16 +15,19 @@ UINT blacklistEntries = 0;
 
 
 BOOL CALLBACK WindowEnumProc (HWND hWnd, LPARAM lParam) {
+	// A lot of unknown processes that shouldn't be processed are passed by the EnumWindows function.
+	if (IsValidAppWindow(hWnd) == FALSE)
+		PASS;
+
 	AppWindow window;
 	
 	if (GetAppWindow(hWnd, &window) == FALSE)
 		PASS;
 
-	if (IsValidAppWindow(&window) == FALSE)
-		PASS;
-
 	TCHAR exeName[MAX_PATH];
 
+	// Windows titles often change, making them unreliable for a blacklist.
+	// The executable path is used for comparison instead.
 	if (GetAppWindowExecutable(&window, exeName, MAX_PATH) == FALSE)
 		PASS;
 
@@ -44,5 +47,5 @@ int main (int argc, char** argv) {
 
 	EnumWindows(WindowEnumProc, 0);
 
-	return 0;
+	return EXIT_SUCCESS;
 }

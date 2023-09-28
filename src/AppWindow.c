@@ -23,25 +23,26 @@ BOOL GetAppWindow (HWND hWnd, AppWindow* window) {
 	window->y = rect.top;
 
 	GetWindowThreadProcessId(hWnd, &window->processId);
-	GetWindowText(hWnd, window->title, MAX_TITLE_LEN);
+	GetWindowText(hWnd, window->title, MAX_TITLE_LENGTH);
 
 	return TRUE;
 }
 
-BOOL IsValidAppWindow (const AppWindow* window) {
-	if (window == NULL || window->handle == NULL)
+// Verifies that the given Windows process falls under the AppWindow definition.
+BOOL IsValidAppWindow (const HWND hWnd) {
+	if (hWnd == NULL)
 		return FALSE;
 
-	if (!IsWindow(window->handle))
+	if (!IsWindow(hWnd))
 		return FALSE;
 
-	if (!IsWindowVisible(window->handle))
+	if (!IsWindowVisible(hWnd))
 		return FALSE;
 
-	if (GetWindowTextLength(window->handle) == 0)
+	if (GetWindowTextLength(hWnd) == 0)
 		return FALSE;
 
-	if (GetWindowLong(window->handle, GWL_STYLE) & WS_EX_TOOLWINDOW)
+	if (GetWindowLong(hWnd, GWL_STYLE) & WS_EX_TOOLWINDOW)
 		return FALSE;
 
 	return TRUE;
@@ -71,6 +72,7 @@ BOOL IsWindowFullScreen (const AppWindow* window) {
 	return FALSE;
 }
 
+// Modifies exeName with the full path to the app executable, if successful.
 BOOL GetAppWindowExecutable (const AppWindow* window, TCHAR exeName[], DWORD maxSize) {
 	if (window == NULL || exeName == NULL)
 		return FALSE;
@@ -87,17 +89,21 @@ BOOL GetAppWindowExecutable (const AppWindow* window, TCHAR exeName[], DWORD max
 	return success;
 }
 
+// The work area contemplates the space used by the taskbar.
 BOOL CenterWindow (const AppWindow* window, const BOOL useWorkArea) {
 	if (window == NULL)
 		return FALSE;
 
 	const DisplayMonitor* monitor = &window->monitor;
 
+	// The window should already be centered if true.
 	if (IsWindowMaximized(window) || IsWindowFullScreen(window))
 		return TRUE;
 
 	UINT X, Y;
 
+	// In Windows 10 the taskbar can be at the bottom, left, right or top of the screen.
+	// Changing the calculations is necessary because of this.
 	if (useWorkArea) {
 		X = monitor->workX + (monitor->workWidth / 2) - (window->width / 2);
 		Y = monitor->workY + (monitor->workHeight / 2) - (window->height / 2);

@@ -13,11 +13,12 @@
 #include "DisplayMonitor.h"
 #endif // _DISPLAY_MONITOR_H
 
-#ifndef MAX_TITLE_LEN
-#define MAX_TITLE_LEN 256
+#ifndef MAX_TITLE_LENGTH
+#define MAX_TITLE_LENGTH 256
 #endif // MAX_TITLE
 
 
+// Represents a Windows process application with a visible rectangle.
 typedef struct {
 
 	HWND handle;
@@ -25,7 +26,7 @@ typedef struct {
 
 	DisplayMonitor monitor;
 
-	TCHAR title[MAX_TITLE_LEN];
+	TCHAR title[MAX_TITLE_LENGTH];
 
 	UINT width;
 	UINT height;
@@ -36,7 +37,7 @@ typedef struct {
 
 
 BOOL GetAppWindow (HWND hWnd, AppWindow* window);
-BOOL IsValidAppWindow (const AppWindow* window);
+BOOL IsValidAppWindow (const HWND hWnd);
 BOOL IsWindowMaximized (const AppWindow* window);
 BOOL IsWindowFullScreen (const AppWindow* window);
 BOOL GetAppWindowExecutable (const AppWindow* window, TCHAR exeName[], DWORD maxSize);
