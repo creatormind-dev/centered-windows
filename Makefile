@@ -1,7 +1,7 @@
 # Compiler and flags
 CC = gcc
 RC = windres
-CFLAGS = -Wall -Iinclude
+CFLAGS = -Wall -Iinclude -DUNICODE -D_UNICODE
 
 # Directories
 SRC_DIR = src
