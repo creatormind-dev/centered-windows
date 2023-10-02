@@ -1,39 +1,36 @@
 # Centered Windows
 
-Script that repositions application windows to the center of the screen they are on.
-Written in C, for the Windows OS.
+Program that repositions application windows to the center of the screen.
+Written in the C Programming Language, for the Windows OS.
 
 ## Downloading
 
-Since this thingamajig is written in C, there is no executable to download.
-Instead, you must build the source code to get the executable.
+You can download the 64 bit executable, or build the source code yourself (recommended).
+Head over to the **Releases** section and either download the `.exe` file if you just want the program, or the `.zip` file if you want to build it yourself.
 
-You can directly download the source code by going to the [latest release](releases).
-Alternatively, you can clone the repository.
+If you download the `.exe` file it is recommended to make a new folder and move the program inside the folder.
 
 ### Building the Source Code
 
-Before starting, you must have a C/C++ compiler installed.
+This project was built and tested with the `g++` compiler, the one included in the GNU Compilers Collection. It is recommended to build the project with the same compiler, you can download and install it with [MSYS2 and MinGW](https://www.msys2.org/).
 
-The majority of this project was built and tested with the GCC compiler, so I recommend using it.
-You can download and install it with [MSYS2 and MinGW64](https://www.msys2.org/).
-It may also be possible to use the MSVC compiler, however, I'd recommend creating a Visual Studio project and building the code from there.
+Settings related to how the compiler will build the program can be changed in the [Makefile](Makefile) configuration, although it's better left as is, unless you know exactly what you are doing.
 
-For your convenience, I've included a very useful tool that you might know as a Makefile. If you installed MinGW64 you can use the `make` command in the project folder to build the source code without doing much more. Here's how to do it:
-- Open a MinGW64 terminal.
-- Change to the project directory.
+To build the program follow these steps:
+- Open a Linux subsystem terminal. The one provided by MinGW works fine.
+- Navigate to the project directory.
 - Run the `make` command.
 
-_You may get an error when compiling, it most likely is due to a missing_ `bin/` _directory. Just create the folder and try again._
+If everything goes well, you should see the `Centered Windows.exe` file appear at the root of the project.
 
-## Usage & Configuration
+## Usage and Configuration
 
-Out of the box, the script will center every window that is not maximized, in full-screen or bigger than it's parent display; you can change this behavior using a blacklist. Simply create a `blacklist.txt` file in the same directory of the executable and write the title of the windows you'd like to leave out, separated by a new line.
+Out of the box, the program will center every window that is not maximized or in full-screen, you can change this behavior using a blacklist.
 
-Alternatively, you can make this same file work as a whitelist instead. To achieve this, go to the [main.c](src/main.c) and uncomment the line that starts with `#define WHITELIST`. Now only the windows listed will be centered.
+Simply create a `blacklist.txt` file in the same directory of the executable and write the absolute directory path to the application executable of the windows you want to exclude, one line per entry.
 
-And as an extra, you can change the name of the blacklist/whitelist file, just change the string of the `BLACKLIST_FILENAME` constant in the [main.c](src/main.c) file to the name you want your file to be looked up as.
+If you decided to download the source code or clone the repository, you can also change the name of the blacklist file. It should be defined as `BLACKLIST_FILENAME` in the **[main.c](src/main.c)** file.
 
 ## License
 
-This project is licensed under the **Mozilla Public License Version 2.0** - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **Mozilla Public License Version 2.0** - see the [LICENSE](LICENSE) file for more details.

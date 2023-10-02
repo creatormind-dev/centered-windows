@@ -58,3 +58,6 @@ bin/
 
 # VS Code
 .vscode/
+
+# Misc
+*.txt
