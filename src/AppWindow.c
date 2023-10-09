@@ -72,6 +72,24 @@ BOOL IsWindowFullScreen (const AppWindow* window) {
 	return FALSE;
 }
 
+BOOL IsWindowOutOfBounds (const AppWindow* window, UINT flags) {
+	const DisplayMonitor* monitor = &window->monitor;
+
+	if ((flags & APPWND_OOB_POSITION) &&
+		(window->x > (monitor->x + monitor->width) ||
+		window->y > (monitor->y + monitor->height) ||
+		(window->x + window->width) < monitor->x ||
+		(window->y + window->height) < monitor->y))
+		return TRUE;
+
+	if ((flags & APPWND_OOB_SIZE) &&
+		(window->width > monitor->width ||
+		window->height > monitor->height))
+		return TRUE;
+
+	return FALSE;
+}
+
 // Modifies exeName with the full path to the app executable, if successful.
 BOOL GetAppWindowExecutable (const AppWindow* window, TCHAR exeName[], DWORD maxSize) {
 	if (window == NULL || exeName == NULL)
@@ -100,7 +118,10 @@ BOOL CenterWindow (const AppWindow* window, const BOOL useWorkArea) {
 	if (IsWindowMaximized(window) || IsWindowFullScreen(window))
 		return TRUE;
 
-	UINT X, Y;
+	if (IsWindowOutOfBounds(window, APPWND_OOB_POSITION | APPWND_OOB_SIZE))
+		return FALSE;
+
+	int X, Y;
 
 	// In Windows 10 the taskbar can be at the bottom, left, right or top of the screen.
 	// Changing the calculations is necessary because of this.

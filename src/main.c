@@ -11,7 +11,7 @@
 
 
 TCHAR blacklist[MAX_PATH][MAX_BLACKLIST_ENTRIES];
-UINT blacklistEntries = 0;
+int blacklistEntries = 0;
 
 
 BOOL CALLBACK WindowEnumProc (HWND hWnd, LPARAM lParam) {
@@ -31,12 +31,25 @@ BOOL CALLBACK WindowEnumProc (HWND hWnd, LPARAM lParam) {
 	if (GetAppWindowExecutable(&window, exeName, MAX_PATH) == FALSE)
 		PASS;
 
+#ifdef _DEBUG
+	_tprintf_s(_T("AppWnd: %s\nAppExe: %s\n"), window.title, exeName);
+#endif
+
 	for (int i = 0; i < blacklistEntries; i++) {
-		if (_tcsncmp(exeName, blacklist[i], _tcslen(exeName)) == 0)
+		if (_tcsncmp(exeName, blacklist[i], _tcslen(exeName)) == 0) {
+#ifdef _DEBUG
+			_tprintf_s(_T("\"%s\" found in blacklist, skipping.\n\n"), exeName);
+#endif
+
 			PASS;
+		}
 	}
 
-	CenterWindow(&window, TRUE);
+	if (CenterWindow(&window, TRUE) == FALSE) {
+#ifdef _DEBUG
+		_tprintf_s(_T("Err: Couldn't center window \"%s\".\n\n"), window.title);
+#endif
+	}
 
 	PASS;
 }
@@ -45,7 +58,18 @@ BOOL CALLBACK WindowEnumProc (HWND hWnd, LPARAM lParam) {
 int main (int argc, char** argv) {
 	blacklistEntries = ReadWindowBlacklist(_T(BLACKLIST_FILENAME), blacklist, MAX_PATH);
 
+#ifdef _DEBUG
+	if (blacklistEntries == -1)
+		_tprintf_s(_T("\"%s\" not found. Blacklist will be omitted.\n\n"), _T(BLACKLIST_FILENAME));
+	else
+		_tprintf_s(_T("Read %d entries from \"%s\".\n\n"), blacklistEntries, _T(BLACKLIST_FILENAME));
+#endif
+
 	EnumWindows(WindowEnumProc, 0);
+
+#ifdef _DEBUG
+	system("pause");
+#endif
 
 	return EXIT_SUCCESS;
 }
