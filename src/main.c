@@ -24,19 +24,40 @@ BOOL CALLBACK WindowEnumProc (HWND hWnd, LPARAM lParam) {
 	if (GetAppWindow(hWnd, &window) == FALSE)
 		PASS;
 
-	TCHAR exeName[MAX_PATH];
+	TCHAR exePath[MAX_PATH];
+	TCHAR exeName[64];
+	UINT exePathLen = 0;
+	UINT exeNameLen = 0;
 
 	// Windows titles often change, making them unreliable for a blacklist.
 	// The executable path is used for comparison instead.
-	if (GetAppWindowExecutable(&window, exeName, MAX_PATH) == FALSE)
+	if (GetAppWindowExecutable(&window, exePath, MAX_PATH) == FALSE)
 		PASS;
 
+	exePathLen = _tcslen(exePath);
+	
+	for (int i = (exePathLen - 1); i >= 0; i--) {
+		if (exePath[i] != (TCHAR)'\\')
+			continue;
+
+		// Slices the executable name from it's path, populating exeName with the '*.exe' part.
+		_tcsnccpy_s(exeName,
+			sizeof(exeName) / sizeof(TCHAR),
+			(exePath + i + 1),
+			exePathLen - (i + 1)
+		);
+
+		break;
+	}
+
+	exeNameLen = _tcslen(exeName);
+
 #ifdef _DEBUG
-	_tprintf_s(_T("AppWnd: %s\nAppExe: %s\n"), window.title, exeName);
+	_tprintf_s(_T("AppWnd: %s\nAppExe: %s (%s)\n"), window.title, exePath, exeName);
 #endif
 
 	for (int i = 0; i < blacklistEntries; i++) {
-		if (_tcsncmp(exeName, blacklist[i], _tcslen(exeName)) == 0) {
+		if (_tcsncmp(exeName, blacklist[i], exeNameLen) == 0) {
 #ifdef _DEBUG
 			_tprintf_s(_T("\"%s\" found in blacklist, skipping.\n\n"), exeName);
 #endif
