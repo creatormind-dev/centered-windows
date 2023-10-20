@@ -1,7 +1,7 @@
 # Compiler and flags
 CC = gcc
 RC = windres
-CFLAGS = -Wall -Wextra -DUNICODE -D_UNICODE -D_DEBUG
+CFLAGS = -static-libgcc -Wall -Wextra -DUNICODE -D_UNICODE -D_DEBUG
 
 # Linker flags
 LDFLAGS = -I$(INC_DIR) -L$(LIB_DIR)
@@ -25,7 +25,7 @@ EXECUTABLE := Centered Windows
 
 # Build rule
 $(EXECUTABLE): $(OBJECTS) $(RESOURCE_OBJ)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o "$@" $^ $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o "$(EXECUTABLE)" $^ $(LIBS)
 
 # Object files rule
 $(BIN_DIR)/%.o: $(SRC_DIR)/%.c $(HEADERS)
