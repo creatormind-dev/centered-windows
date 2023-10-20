@@ -1,7 +1,7 @@
 # Compiler and flags
 CC = gcc
 RC = windres
-CFLAGS = -static-libgcc -Wall -Wextra -DUNICODE -D_UNICODE -D_DEBUG
+CFLAGS = -static-libgcc -Wall -Wextra -DUNICODE -D_UNICODE
 
 # Linker flags
 LDFLAGS = -I$(INC_DIR) -L$(LIB_DIR)
