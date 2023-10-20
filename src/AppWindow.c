@@ -48,16 +48,20 @@ BOOL IsValidAppWindow (const HWND hWnd) {
 	return TRUE;
 }
 
-BOOL IsWindowMaximized (const AppWindow* window) {
-	const DisplayMonitor* monitor = &window->monitor;
+// Wrapper for the Windows API function.
+BOOL IsWindowMinimized (const HWND hWnd) {
+	if (hWnd == NULL)
+		return FALSE;
 
-	if (window->x == monitor->workX &&
-		window->y == monitor->workY &&
-		window->width == monitor->workWidth &&
-		window->height == monitor->workHeight)
-		return TRUE;
+	return IsIconic(hWnd);
+}
 
-	return FALSE;
+// Wrapper for the Windows API function.
+BOOL IsWindowMaximized (const HWND hWnd) {
+	if (hWnd == NULL)
+		return FALSE;
+
+	return IsZoomed(hWnd);
 }
 
 BOOL IsWindowFullScreen (const AppWindow* window) {
@@ -114,8 +118,9 @@ BOOL CenterWindow (const AppWindow* window, const BOOL useWorkArea) {
 
 	const DisplayMonitor* monitor = &window->monitor;
 
-	// The window should already be centered if true.
-	if (IsWindowMaximized(window) || IsWindowFullScreen(window))
+	if (IsWindowMinimized(window->handle) ||
+		IsWindowMaximized(window->handle) ||
+		IsWindowFullScreen(window))
 		return TRUE;
 
 	if (IsWindowOutOfBounds(window, APPWND_OOB_POSITION | APPWND_OOB_SIZE))

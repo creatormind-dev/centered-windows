@@ -40,11 +40,14 @@ typedef struct {
 
 
 BOOL GetAppWindow (HWND hWnd, AppWindow* window);
+BOOL GetAppWindowExecutable (const AppWindow* window, TCHAR exeName[], DWORD maxSize);
+
 BOOL IsValidAppWindow (const HWND hWnd);
-BOOL IsWindowMaximized (const AppWindow* window);
+BOOL IsWindowMinimized (const HWND hWnd);
+BOOL IsWindowMaximized (const HWND hWnd);
 BOOL IsWindowFullScreen (const AppWindow* window);
 BOOL IsWindowOutOfBounds (const AppWindow* window, UINT flags);
-BOOL GetAppWindowExecutable (const AppWindow* window, TCHAR exeName[], DWORD maxSize);
+
 BOOL CenterWindow (const AppWindow* window, const BOOL useWorkArea);
 
 
