@@ -11,7 +11,7 @@ BOOL GetDisplayMonitor (HMONITOR hMonitor, DisplayMonitor* monitor) {
 
 	mInfo.cbSize = sizeof(MONITORINFO);
 
-	if (GetMonitorInfo(hMonitor, &mInfo) == FALSE)
+	if (GetMonitorInfoW(hMonitor, &mInfo) == FALSE)
 		return FALSE;
 
 	// The base rectangle represents the real dimensions of the display.

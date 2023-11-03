@@ -11,15 +11,15 @@ typedef struct {
 
 	HMONITOR handle;
 
-	UINT width;
-	UINT height;
-	UINT x;
-	UINT y;
+	int width;
+	int height;
+	int x;
+	int y;
 
-	UINT workWidth;
-	UINT workHeight;
-	UINT workX;
-	UINT workY;
+	int workWidth;
+	int workHeight;
+	int workX;
+	int workY;
 
 } DisplayMonitor;
 

@@ -23,7 +23,7 @@ BOOL GetAppWindow (HWND hWnd, AppWindow* window) {
 	window->y = rect.top;
 
 	GetWindowThreadProcessId(hWnd, &window->processId);
-	GetWindowText(hWnd, window->title, MAX_TITLE_LENGTH);
+	GetWindowTextW(hWnd, window->title, MAX_TITLE_LENGTH);
 
 	return TRUE;
 }
@@ -39,10 +39,10 @@ BOOL IsValidAppWindow (const HWND hWnd) {
 	if (!IsWindowVisible(hWnd))
 		return FALSE;
 
-	if (GetWindowTextLength(hWnd) == 0)
+	if (GetWindowTextLengthW(hWnd) == 0)
 		return FALSE;
 
-	if (GetWindowLong(hWnd, GWL_STYLE) & WS_EX_TOOLWINDOW)
+	if (GetWindowLongW(hWnd, GWL_STYLE) & WS_EX_TOOLWINDOW)
 		return FALSE;
 
 	return TRUE;
@@ -76,7 +76,7 @@ BOOL IsWindowFullScreen (const AppWindow* window) {
 	return FALSE;
 }
 
-BOOL IsWindowOutOfBounds (const AppWindow* window, UINT flags) {
+BOOL IsWindowOutOfBounds (const AppWindow* window, unsigned int flags) {
 	const DisplayMonitor* monitor = &window->monitor;
 
 	if ((flags & APPWND_OOB_POSITION) &&
@@ -95,7 +95,7 @@ BOOL IsWindowOutOfBounds (const AppWindow* window, UINT flags) {
 }
 
 // Modifies exeName with the full path to the app executable, if successful.
-BOOL GetAppWindowExecutable (const AppWindow* window, TCHAR exeName[], DWORD maxSize) {
+BOOL GetAppWindowExecutable (const AppWindow* window, wchar_t exeName[], DWORD maxSize) {
 	if (window == NULL || exeName == NULL)
 		return FALSE;
 
@@ -104,7 +104,7 @@ BOOL GetAppWindowExecutable (const AppWindow* window, TCHAR exeName[], DWORD max
 	if (hProcess == NULL)
 		return FALSE;
 
-	BOOL success = QueryFullProcessImageName(hProcess, 0, exeName, &maxSize);
+	BOOL success = QueryFullProcessImageNameW(hProcess, 0, exeName, &maxSize);
 
 	CloseHandle(hProcess);
 

@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include <tchar.h>
+#include <wchar.h>
 #include <stdio.h>
 #include <windows.h>
 
@@ -7,13 +7,14 @@
 #include "WindowBlacklist.h"
 
 #define PASS return TRUE
-#define BLACKLIST_FILENAME "blacklist.txt"
+#define BLACKLIST_FILENAME L"blacklist.txt"
 
 
-TCHAR blacklist[MAX_PATH][MAX_BLACKLIST_ENTRIES];
+wchar_t blacklist[MAX_PATH][MAX_BLACKLIST_ENTRIES];
 int blacklistEntries = 0;
 
 
+// Callback function for EnumWindows. Gets called for every window in the system.
 BOOL CALLBACK WindowEnumProc (HWND hWnd, LPARAM lParam) {
 	// A lot of unknown processes that shouldn't be processed are passed by the EnumWindows function.
 	if (IsValidAppWindow(hWnd) == FALSE)
@@ -24,25 +25,25 @@ BOOL CALLBACK WindowEnumProc (HWND hWnd, LPARAM lParam) {
 	if (GetAppWindow(hWnd, &window) == FALSE)
 		PASS;
 
-	TCHAR exePath[MAX_PATH];
-	TCHAR exeName[64];
-	UINT exePathLen = 0;
-	UINT exeNameLen = 0;
+	wchar_t exePath[MAX_PATH];
+	wchar_t exeName[64];
+	unsigned int exePathLen = 0;
+	unsigned int exeNameLen = 0;
 
 	// Windows titles often change, making them unreliable for a blacklist.
 	// The executable path is used for comparison instead.
 	if (GetAppWindowExecutable(&window, exePath, MAX_PATH) == FALSE)
 		PASS;
 
-	exePathLen = _tcslen(exePath);
+	exePathLen = wcslen(exePath);
 	
 	for (int i = (exePathLen - 1); i >= 0; i--) {
-		if (exePath[i] != (TCHAR)'\\')
+		if (exePath[i] != '\\')
 			continue;
 
 		// Slices the executable name from it's path, populating exeName with the '*.exe' part.
-		_tcsnccpy_s(exeName,
-			sizeof(exeName) / sizeof(TCHAR),
+		wcsncpy_s(exeName,
+			sizeof(exeName) / sizeof(wchar_t),
 			(exePath + i + 1),
 			exePathLen - (i + 1)
 		);
@@ -50,16 +51,16 @@ BOOL CALLBACK WindowEnumProc (HWND hWnd, LPARAM lParam) {
 		break;
 	}
 
-	exeNameLen = _tcslen(exeName);
+	exeNameLen = wcslen(exeName);
 
 #ifdef _DEBUG
-	_tprintf_s(_T("AppWnd: %s\nAppExe: %s (%s)\n"), window.title, exePath, exeName);
+	wprintf_s(L"AppWnd: %ls\nAppExe: %ls (%ls)\n", window.title, exePath, exeName);
 #endif
 
 	for (int i = 0; i < blacklistEntries; i++) {
-		if (_tcsncmp(exeName, blacklist[i], exeNameLen) == 0) {
+		if (wcsncmp(exeName, blacklist[i], exeNameLen) == 0) {
 #ifdef _DEBUG
-			_tprintf_s(_T("\"%s\" found in blacklist, skipping.\n\n"), exeName);
+			wprintf_s(L"\"%ls\" found in blacklist, skipping.\n\n", exeName);
 #endif
 
 			PASS;
@@ -68,7 +69,7 @@ BOOL CALLBACK WindowEnumProc (HWND hWnd, LPARAM lParam) {
 
 	if (CenterWindow(&window, TRUE) == FALSE) {
 #ifdef _DEBUG
-		_tprintf_s(_T("Err: Couldn't center window \"%s\".\n\n"), window.title);
+		wprintf_s(L"Err: Couldn't center window \"%ls\".\n\n", window.title);
 #endif
 	}
 
@@ -77,13 +78,13 @@ BOOL CALLBACK WindowEnumProc (HWND hWnd, LPARAM lParam) {
 
 
 int main (int argc, char** argv) {
-	blacklistEntries = ReadWindowBlacklist(_T(BLACKLIST_FILENAME), blacklist, MAX_PATH);
+	blacklistEntries = ReadWindowBlacklist(BLACKLIST_FILENAME, blacklist, MAX_PATH);
 
 #ifdef _DEBUG
 	if (blacklistEntries == -1)
-		_tprintf_s(_T("\"%s\" not found. Blacklist will be omitted.\n\n"), _T(BLACKLIST_FILENAME));
+		wprintf_s(L"\"%ls\" not found. Blacklist will be omitted.\n\n", BLACKLIST_FILENAME);
 	else
-		_tprintf_s(_T("Read %d entries from \"%s\".\n\n"), blacklistEntries, _T(BLACKLIST_FILENAME));
+		wprintf_s(L"Read %d entries from \"%ls\".\n\n", blacklistEntries, BLACKLIST_FILENAME);
 #endif
 
 	EnumWindows(WindowEnumProc, 0);

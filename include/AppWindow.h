@@ -29,7 +29,7 @@ typedef struct {
 
 	DisplayMonitor monitor;
 
-	TCHAR title[MAX_TITLE_LENGTH];
+	wchar_t title[MAX_TITLE_LENGTH];
 
 	int width;
 	int height;
@@ -40,13 +40,13 @@ typedef struct {
 
 
 BOOL GetAppWindow (HWND hWnd, AppWindow* window);
-BOOL GetAppWindowExecutable (const AppWindow* window, TCHAR exeName[], DWORD maxSize);
+BOOL GetAppWindowExecutable (const AppWindow* window, wchar_t exeName[], DWORD maxSize);
 
 BOOL IsValidAppWindow (const HWND hWnd);
 BOOL IsWindowMinimized (const HWND hWnd);
 BOOL IsWindowMaximized (const HWND hWnd);
 BOOL IsWindowFullScreen (const AppWindow* window);
-BOOL IsWindowOutOfBounds (const AppWindow* window, UINT flags);
+BOOL IsWindowOutOfBounds (const AppWindow* window, unsigned int flags);
 
 BOOL CenterWindow (const AppWindow* window, const BOOL useWorkArea);
 

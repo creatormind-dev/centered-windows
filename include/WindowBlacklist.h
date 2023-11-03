@@ -1,9 +1,9 @@
 #ifndef _WINDOWBLACKLIST_H
 #define _WINDOWBLACKLIST_H
 
-#ifndef _TCHAR
-#include <tchar.h>
-#endif // _TCHAR
+#ifndef _WCHAR_T_DEFINED
+#include <wchar.h>
+#endif // _WCHAR_T_DEFINED
 
 #ifndef _STDIO_DEFINED
 #include <stdio.h>
@@ -18,7 +18,7 @@
 #endif // MAX_LINE_LENGTH
 
 
-int ReadWindowBlacklist (const TCHAR* filename, TCHAR blacklist[][MAX_BLACKLIST_ENTRIES], int maxEntrySize);
+int ReadWindowBlacklist (const wchar_t* filename, wchar_t blacklist[][MAX_BLACKLIST_ENTRIES], int maxEntrySize);
 
 
 #endif // _WINDOWBLACKLIST_H
