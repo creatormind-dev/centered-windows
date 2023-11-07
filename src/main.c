@@ -32,7 +32,7 @@ BOOL CALLBACK WindowEnumProc (HWND hWnd, LPARAM lParam) {
 
 	// Windows titles often change, making them unreliable for a blacklist.
 	// The executable path is used for comparison instead.
-	if (GetAppWindowExecutable(&window, exePath, MAX_PATH) == FALSE)
+	if (GetAppWindowExecutable(&window, exePath) == FALSE)
 		PASS;
 
 	exePathLen = wcslen(exePath);

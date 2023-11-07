@@ -40,7 +40,7 @@ typedef struct {
 
 
 BOOL GetAppWindow (HWND hWnd, AppWindow* window);
-BOOL GetAppWindowExecutable (const AppWindow* window, wchar_t exeName[], DWORD maxSize);
+BOOL GetAppWindowExecutable (const AppWindow* window, wchar_t fullPath[MAX_PATH]);
 
 BOOL IsValidAppWindow (const HWND hWnd);
 BOOL IsWindowMinimized (const HWND hWnd);

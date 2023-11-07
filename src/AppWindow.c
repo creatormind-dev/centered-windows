@@ -94,17 +94,18 @@ BOOL IsWindowOutOfBounds (const AppWindow* window, unsigned int flags) {
 	return FALSE;
 }
 
-// Modifies exeName with the full path to the app executable, if successful.
-BOOL GetAppWindowExecutable (const AppWindow* window, wchar_t exeName[], DWORD maxSize) {
-	if (window == NULL || exeName == NULL)
+// Modifies fullPath with the full path to the app executable, if successful.
+BOOL GetAppWindowExecutable (const AppWindow* window, wchar_t fullPath[MAX_PATH]) {
+	if (window == NULL || fullPath == NULL)
 		return FALSE;
 
 	HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, window->processId);
+	DWORD maxSize = MAX_PATH;
 
 	if (hProcess == NULL)
 		return FALSE;
 
-	BOOL success = QueryFullProcessImageNameW(hProcess, 0, exeName, &maxSize);
+	BOOL success = QueryFullProcessImageNameW(hProcess, 0, fullPath, &maxSize);
 
 	CloseHandle(hProcess);
 
