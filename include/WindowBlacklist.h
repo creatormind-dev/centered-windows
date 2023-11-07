@@ -9,16 +9,13 @@
 #include <stdio.h>
 #endif // _STDIO_DEFINED
 
-#ifndef MAX_BLACKLIST_ENTRIES
-#define MAX_BLACKLIST_ENTRIES 64
-#endif // MAX_BLACKLIST_ENTRIES
-
-#ifndef MAX_LINE_LENGTH
-#define MAX_LINE_LENGTH 1024
-#endif // MAX_LINE_LENGTH
+#ifndef MAX_ENTRY_SIZE
+#define MAX_ENTRY_SIZE 64
+#endif // MAX_ENTRY_SIZE
 
 
-int ReadWindowBlacklist (const wchar_t* filename, wchar_t blacklist[][MAX_BLACKLIST_ENTRIES], int maxEntrySize);
+int ReadWindowBlacklist (const wchar_t* filename, wchar_t*** blacklist);
+void FreeWindowBlacklist (wchar_t***, int entries);
 
 
 #endif // _WINDOWBLACKLIST_H

@@ -10,7 +10,7 @@
 #define BLACKLIST_FILENAME L"blacklist.txt"
 
 
-wchar_t blacklist[MAX_PATH][MAX_BLACKLIST_ENTRIES];
+wchar_t** blacklist = NULL;
 int blacklistEntries = 0;
 
 
@@ -78,7 +78,7 @@ BOOL CALLBACK WindowEnumProc (HWND hWnd, LPARAM lParam) {
 
 
 int main (int argc, char** argv) {
-	blacklistEntries = ReadWindowBlacklist(BLACKLIST_FILENAME, blacklist, MAX_PATH);
+	blacklistEntries = ReadWindowBlacklist(BLACKLIST_FILENAME, &blacklist);
 
 #ifdef _DEBUG
 	if (blacklistEntries == -1)
@@ -92,6 +92,8 @@ int main (int argc, char** argv) {
 #ifdef _DEBUG
 	system("pause");
 #endif
+
+	FreeWindowBlacklist(&blacklist, blacklistEntries);
 
 	return EXIT_SUCCESS;
 }
