@@ -1,11 +1,11 @@
 #ifndef _APPWINDOW_H
 #define _APPWINDOW_H
 
-#ifndef _STDIO_DEFINED
+#ifndef _INC_STDIO
 #include <stdio.h>
-#endif // _STDIO_DEFINED
+#endif // _INC_STDIO
 
-#ifndef _WINDOWS_
+#ifndef _INC_WINDOWS
 #include <windows.h>
 #endif // _WINDOWS_
 

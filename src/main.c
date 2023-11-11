@@ -56,7 +56,6 @@ BOOL CALLBACK WindowEnumProc (HWND hWnd, LPARAM lParam) {
 #ifdef _DEBUG
 	wprintf_s(L"AppWnd: %ls\nAppExe: %ls (%ls)\n", window.title, exePath, exeName);
 #endif
-
 	for (int i = 0; i < blacklistEntries; i++) {
 		if (wcsncmp(exeName, blacklist[i], exeNameLen) == 0) {
 #ifdef _DEBUG

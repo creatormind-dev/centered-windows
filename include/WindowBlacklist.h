@@ -1,13 +1,17 @@
 #ifndef _WINDOWBLACKLIST_H
 #define _WINDOWBLACKLIST_H
 
-#ifndef _WCHAR_T_DEFINED
-#include <wchar.h>
-#endif // _WCHAR_T_DEFINED
+#ifndef _INC_STDLIB
+#include <stdlib.h>
+#endif // _INC_STDLIB
 
-#ifndef _STDIO_DEFINED
+#ifndef _INC_WCHAR
+#include <wchar.h>
+#endif // _INC_WCHAR
+
+#ifndef _INC_STDIO
 #include <stdio.h>
-#endif // _STDIO_DEFINED
+#endif // _INC_STDIO
 
 #ifndef MAX_ENTRY_SIZE
 #define MAX_ENTRY_SIZE 64

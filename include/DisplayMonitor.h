@@ -1,9 +1,9 @@
 #ifndef _DISPLAYMONITOR_H
 #define _DISPLAYMONITOR_H
 
-#ifndef _WINDOWS_
+#ifndef _INC_WINDOWS
 #include <windows.h>
-#endif // _WINDOWS_
+#endif // _INC_WINDOWS
 
 
 // Represents basic information of a detected screen display.
