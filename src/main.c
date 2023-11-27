@@ -3,11 +3,12 @@
 #include <stdio.h>
 #include <windows.h>
 
+#include "IniConfig.h"
 #include "AppWindow.h"
 #include "WindowBlacklist.h"
 
+#define CONFIG_FILENAME L"Settings.ini"
 #define PASS return TRUE
-#define BLACKLIST_FILENAME L"blacklist.txt"
 
 
 wchar_t** blacklist = NULL;
@@ -66,7 +67,7 @@ BOOL CALLBACK WindowEnumProc (HWND hWnd, LPARAM lParam) {
 		}
 	}
 
-	if (CenterWindow(&window, TRUE) == FALSE) {
+	if (CenterWindow(&window, UseWorkArea) == FALSE) {
 #ifdef _DEBUG
 		wprintf_s(L"Err: Couldn't center window \"%ls\".\n\n", window.title);
 #endif
@@ -77,22 +78,24 @@ BOOL CALLBACK WindowEnumProc (HWND hWnd, LPARAM lParam) {
 
 
 int main (int argc, char** argv) {
-	blacklistEntries = ReadWindowBlacklist(BLACKLIST_FILENAME, &blacklist);
+	LoadConfig(CONFIG_FILENAME);
+
+	blacklistEntries = ReadWindowBlacklist(BlacklistFilename, &blacklist);
 
 #ifdef _DEBUG
 	if (blacklistEntries == -1)
-		wprintf_s(L"\"%ls\" not found. Blacklist will be omitted.\n\n", BLACKLIST_FILENAME);
+		wprintf_s(L"\"%ls\" not found. Blacklist will be omitted.\n\n", BlacklistFilename);
 	else
-		wprintf_s(L"Read %d entries from \"%ls\".\n\n", blacklistEntries, BLACKLIST_FILENAME);
+		wprintf_s(L"Read %d entries from \"%ls\".\n\n", blacklistEntries, BlacklistFilename);
 #endif
 
 	EnumWindows(WindowEnumProc, 0);
 
-#ifdef _DEBUG
-	system("pause");
-#endif
-
 	FreeWindowBlacklist(&blacklist, blacklistEntries);
+	FreeConfig();
+
+	if (DebugMode == TRUE)
+		system("pause");
 
 	return EXIT_SUCCESS;
 }

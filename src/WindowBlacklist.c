@@ -7,22 +7,20 @@ int ReadWindowBlacklist (const wchar_t* filename, wchar_t*** blacklist) {
 	wchar_t entry[MAX_ENTRY_SIZE];
 	unsigned int entries = 0;
 
-	_wfopen_s(&file, filename, L"r");
-
-	if (file == NULL)
+	if (_wfopen_s(&file, filename, L"r") != 0)
 		return -1;
 
 	while (fgetws(entry, MAX_ENTRY_SIZE, file) != NULL)
 		entries++;
 
-	*blacklist = malloc(sizeof(wchar_t*) * entries);
+	*blacklist = (wchar_t**) malloc(sizeof(wchar_t*) * entries);
 
 	rewind(file);
 
 	for (int i = 0; i < entries; i++) {
 		fgetws(entry, MAX_ENTRY_SIZE, file);
 
-		(*blacklist)[i] = malloc(sizeof(wchar_t) * wcslen(entry));
+		(*blacklist)[i] = (wchar_t*) malloc(sizeof(wchar_t) * wcslen(entry));
 
 		wcscpy((*blacklist)[i], entry);
 	}
