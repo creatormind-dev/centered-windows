@@ -5,31 +5,26 @@ Written in the C Programming Language, for the Windows OS.
 
 ## Downloading
 
-You can download the 64 bit executable, or build the source code yourself (recommended).
-Head over to the **Releases** section and either download the `.exe` file if you just want the program, or the `.zip` file if you want to build it yourself.
-
-If you download the `.exe` file it is recommended to make a new folder and move the program inside the folder.
+🚧 Under construction. 🚧
 
 ### Building the Source Code
 
-This project was built and tested with the `g++` compiler, the one included in the GNU Compilers Collection. It is recommended to build the project with the same compiler, you can download and install it with [MSYS2 and MinGW](https://www.msys2.org/).
+This project was built and tested with the `gcc` compiler, the one included in the GNU Compilers Collection. It is recommended to build the project with the same compiler, you can download and install it with [MSYS2 and MinGW](https://www.msys2.org/).
+
+Additionally, you are required to install either the [MSYS2 MinGW Toolchain](https://www.msys2.org/wiki/MSYS2-introduction/#subsystems) or the [Windows SDK](https://developer.microsoft.com/en-us/windows/downloads/windows-sdk/). In reality, only the Windows SDK is needed, but getting the toolchain will also give you additional libraries to develop with C/C++. Alternatively, you can download [Visual Studio 2022 or Build Tools for Visual Studio 2022](https://visualstudio.microsoft.com/downloads/) and select only to install the Windows SDK.
 
 Settings related to how the compiler will build the program can be changed in the [Makefile](Makefile) configuration, although it's better left as is, unless you know exactly what you are doing.
 
 To build the program follow these steps:
-- Open a Linux subsystem terminal. The one provided by MinGW works fine.
+- Open a Linux subsystem terminal. The one provided by MSYS2 works fine (UCRT/MinGW).
 - Navigate to the project directory.
 - Run the `make` command.
 
-If everything goes well, you should see the `Centered Windows.exe` file appear at the root of the project.
+If everything goes well, you should see the `Centered Windows.exe` file appear at the root of the project. If building fails, make sure there is a `/bin` directory; if the build still fails, please submit an issue.
 
 ## Usage and Configuration
 
-Out of the box, the program will center every window that is not maximized or in full-screen, you can change this behavior using a blacklist.
-
-Simply create a `blacklist.txt` file in the same directory of the executable and write the absolute directory path to the application executable of the windows you want to exclude, one line per entry.
-
-If you decided to download the source code or clone the repository, you can also change the name of the blacklist file. It should be defined as `BLACKLIST_FILENAME` in the **[main.c](src/main.c)** file.
+🚧 Under construction. 🚧
 
 ## License
 
