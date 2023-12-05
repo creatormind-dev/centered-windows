@@ -1,9 +1,11 @@
 #include <stdlib.h>
-#include <wchar.h>
 #include <stdio.h>
+#include <stdarg.h>
+#include <wchar.h>
 #include <windows.h>
 
 #include "IniConfig.h"
+#include "Logger.h"
 #include "AppWindow.h"
 #include "WindowBlacklist.h"
 
@@ -14,6 +16,24 @@
 wchar_t** blacklist = NULL;
 int blacklistEntries = 0;
 
+
+// Logs a formatted string to the console and the log file. Use like printf.
+VOID Log (const LogType type, const wchar_t* format, ...) {
+	// IDK what kind of witchcraft C does to have variable arguments, but it's pretty cool.
+	va_list args;
+	wchar_t buffer[1024];
+
+	va_start(args, format);
+
+	vswprintf_s(buffer, sizeof(buffer) / sizeof(wchar_t), format, args);
+
+	va_end(args);
+
+	if (DebugMode == TRUE)
+		wprintf_s(L"%ls", buffer);
+
+	WriteToLog(type, L"%ls", buffer);
+}
 
 // Callback function for EnumWindows. Gets called for every window in the system.
 BOOL CALLBACK WindowEnumProc (HWND hWnd, LPARAM lParam) {
@@ -54,45 +74,46 @@ BOOL CALLBACK WindowEnumProc (HWND hWnd, LPARAM lParam) {
 
 	exeNameLen = wcslen(exeName);
 
-#ifdef _DEBUG
-	wprintf_s(L"AppWnd: %ls\nAppExe: %ls (%ls)\n", window.title, exePath, exeName);
-#endif
+	if (DebugMode == TRUE)
+		wprintf_s(L"AppWnd: %ls\nAppExe: %ls (%ls)\n", window.title, exePath, exeName);
+
+	// Checks if the executable name is in the blacklist.
 	for (int i = 0; i < blacklistEntries; i++) {
 		if (wcsncmp(exeName, blacklist[i], exeNameLen) == 0) {
-#ifdef _DEBUG
-			wprintf_s(L"\"%ls\" found in blacklist, skipping.\n\n", exeName);
-#endif
+			Log(LOGTYPE_INFO, L"\"%ls\" found in blacklist, skipping.\n", exeName);
 
 			PASS;
 		}
 	}
 
-	if (CenterWindow(&window, UseWorkArea) == FALSE) {
-#ifdef _DEBUG
-		wprintf_s(L"Err: Couldn't center window \"%ls\".\n\n", window.title);
-#endif
-	}
+	if (CenterWindow(&window, UseWorkArea) == TRUE)
+		Log(LOGTYPE_INFO, L"Window \"%ls\" (%ls) centered.\n", window.title, exeName);	
+	else
+		Log(LOGTYPE_WARNING, L"Couldn't center window \"%ls\" (%ls).\n", window.title, exeName);
 
 	PASS;
 }
 
 
-int main (int argc, char** argv) {
-	LoadConfig(CONFIG_FILENAME);
+int main (void) {
+	if (LoadConfig(CONFIG_FILENAME) == TRUE) {
+		StartLogger();
+		Log(LOGTYPE_INFO, L"Configuration from %ls parsed and loaded.\n", CONFIG_FILENAME);
+	}
 
 	blacklistEntries = ReadWindowBlacklist(BlacklistFilename, &blacklist);
 
-#ifdef _DEBUG
 	if (blacklistEntries == -1)
-		wprintf_s(L"\"%ls\" not found. Blacklist will be omitted.\n\n", BlacklistFilename);
+		Log(LOGTYPE_WARNING, L"\"%ls\" not found. Blacklist will be omitted.\n", BlacklistFilename);
 	else
-		wprintf_s(L"Read %d entries from \"%ls\".\n\n", blacklistEntries, BlacklistFilename);
-#endif
+		Log(LOGTYPE_INFO, L"Read %d entries from \"%ls\".\n", blacklistEntries, BlacklistFilename);
 
 	EnumWindows(WindowEnumProc, 0);
 
 	FreeWindowBlacklist(&blacklist, blacklistEntries);
 	FreeConfig();
+
+	Log(LOGTYPE_INFO, L"Exiting program...\n\n");
 
 	if (DebugMode == TRUE)
 		system("pause");

@@ -1,5 +1,5 @@
-#ifndef _WINDOWBLACKLIST_H
-#define _WINDOWBLACKLIST_H
+#ifndef _WINDOW_BLACKLIST_H_
+#define _WINDOW_BLACKLIST_H_
 
 #ifndef _INC_STDLIB
 #include <stdlib.h>
@@ -22,4 +22,4 @@ int ReadWindowBlacklist (const wchar_t* filename, wchar_t*** blacklist);
 void FreeWindowBlacklist (wchar_t***, int entries);
 
 
-#endif // _WINDOWBLACKLIST_H
+#endif // _WINDOW_BLACKLIST_H_
