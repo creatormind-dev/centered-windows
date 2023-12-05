@@ -36,6 +36,11 @@ $(RESOURCE_OBJ): $(RESOURCE)
 	$(RC) -i $< -o $@
 
 
+.PHONY: all
+
+# All rule
+all: $(EXECUTABLE)
+
 .PHONY: clean
 
 # Clean rule
