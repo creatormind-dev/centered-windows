@@ -4,6 +4,7 @@
 #include <windows.h>
 
 #include "IniConfig.h"
+#include "Logger.h"
 #include "AppWindow.h"
 #include "WindowBlacklist.h"
 
