@@ -1,5 +1,5 @@
-#ifndef _APPWINDOW_H
-#define _APPWINDOW_H
+#ifndef _APP_WINDOW_H_
+#define _APP_WINDOW_H_
 
 #ifndef _INC_STDIO
 #include <stdio.h>
@@ -51,4 +51,4 @@ BOOL IsWindowOutOfBounds (const AppWindow* window, unsigned int flags);
 BOOL CenterWindow (const AppWindow* window, const BOOL useWorkArea);
 
 
-#endif // _APPWINDOW_H
+#endif // _APP_WINDOW_H_

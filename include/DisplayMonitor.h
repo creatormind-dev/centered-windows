@@ -1,5 +1,5 @@
-#ifndef _DISPLAYMONITOR_H
-#define _DISPLAYMONITOR_H
+#ifndef _DISPLAY_MONITOR_H_
+#define _DISPLAY_MONITOR_H_
 
 #ifndef _INC_WINDOWS
 #include <windows.h>
@@ -27,4 +27,4 @@ typedef struct {
 BOOL GetDisplayMonitor (HMONITOR hMonitor, DisplayMonitor* monitor);
 
 
-#endif // _DISPLAYMONITOR_H
+#endif // _DISPLAY_MONITOR_H_
