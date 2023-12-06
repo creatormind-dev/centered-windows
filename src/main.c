@@ -18,7 +18,7 @@ int blacklistEntries = 0;
 
 
 // Logs a formatted string to the console and the log file. Use like printf.
-VOID Log (const LogType type, const wchar_t* format, ...) {
+void Log (const LogType type, const wchar_t* format, ...) {
 	// IDK what kind of witchcraft C does to have variable arguments, but it's pretty cool.
 	va_list args;
 	wchar_t buffer[1024];
@@ -77,10 +77,25 @@ BOOL CALLBACK WindowEnumProc (HWND hWnd, LPARAM lParam) {
 	if (DebugMode == TRUE)
 		wprintf_s(L"AppWnd: %ls\nAppExe: %ls (%ls)\n", window.title, exePath, exeName);
 
-	// Checks if the executable name is in the blacklist.
+	// Checks if the executable name is in the blacklist/whitelist.
 	for (int i = 0; i < blacklistEntries; i++) {
-		if (wcsncmp(exeName, blacklist[i], exeNameLen) == 0) {
+		bool isInList = wcsncmp(exeName, blacklist[i], exeNameLen) == 0;
+
+		if (isInList == TRUE && UseWhitelist == FALSE) {
+			// The window is in the blacklist, so it's skipped.
 			Log(LOGTYPE_INFO, L"\"%ls\" found in blacklist, skipping.\n", exeName);
+
+			PASS;
+		}
+		else if (UseWhitelist == TRUE && isInList == TRUE) {
+			// The window is in the whitelist, so it's centered.
+			Log(LOGTYPE_INFO, L"\"%ls\" is in whitelist, continuing.\n", exeName);
+
+			break;
+		}
+		else if (UseWhitelist == TRUE && isInList == FALSE && i == (blacklistEntries - 1)) {
+			// The window isn't in the whitelist, so it's skipped.
+			Log(LOGTYPE_INFO, L"\"%ls\" not found in whitelist, skipping.\n", exeName);
 
 			PASS;
 		}
@@ -99,6 +114,12 @@ int main (void) {
 	if (LoadConfig(CONFIG_FILENAME) == TRUE) {
 		StartLogger();
 		Log(LOGTYPE_INFO, L"Configuration from %ls parsed and loaded.\n", CONFIG_FILENAME);
+
+		if (DebugMode == TRUE)
+			Log(LOGTYPE_INFO, L"Debug mode is enabled.\n");
+
+		if (UseWhitelist == TRUE)
+			Log(LOGTYPE_INFO, L"Whitelist mode is enabled.\n");
 	}
 
 	blacklistEntries = ReadWindowBlacklist(BlacklistFilename, &blacklist);
