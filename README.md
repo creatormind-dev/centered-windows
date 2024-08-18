@@ -5,7 +5,7 @@ Written in the C Programming Language, for the Windows OS.
 
 ## Downloading
 
-You can download the program by going to the [latest release](https://github.com/creatormind-dev/centered-windows/releases/latest) and downloading the [`CenteredWindows.zip`](https://github.com/creatormind-dev/centered-windows/releases/latest/CenteredWindows.zip) file. Once downloaded, extract the contents of the `.zip` file into the folder you'd like to hold the program.
+You can download the program by going to the [latest release](https://github.com/creatormind-dev/centered-windows/releases/latest) and downloading the `CenteredWindows.zip` file. Once downloaded, extract the contents of the `.zip` file into the folder you'd like to hold the program.
 
 ### Building the Source Code
 
