@@ -2,20 +2,17 @@
 
 mod overlay;
 
-use overlay::Overlay;
-
-use winit::{
-    error::EventLoopError,
-    event_loop::{ControlFlow, EventLoop}
-};
+use overlay::StateOverlay;
+use winit::event_loop::{ControlFlow, EventLoop};
 
 
-fn main() -> Result<(), EventLoopError> {
+fn main() {
+    env_logger::init();
+
     let event_loop = EventLoop::new().unwrap();
     
     event_loop.set_control_flow(ControlFlow::Wait);
 
-    let mut overlay = Overlay::default();
-
-    event_loop.run_app(&mut overlay)
+    let mut window_state = StateOverlay::new();
+    let _ = event_loop.run_app(&mut window_state);
 }
