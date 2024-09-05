@@ -4,7 +4,7 @@ use std::sync::Arc;
 use pollster::FutureExt;
 use winit::{
 	application::ApplicationHandler,
-	dpi::{LogicalPosition, LogicalSize, PhysicalSize},
+	dpi::{LogicalPosition, LogicalSize, PhysicalSize, Pixel},
 	event::WindowEvent,
 	event_loop::ActiveEventLoop,
 	monitor::MonitorHandle,
@@ -38,8 +38,6 @@ impl<'a> ApplicationHandler for StateOverlay<'a> {
 
 		let _ = window.request_inner_size(size);
 		window.set_outer_position(position);
-
-		println!("Overlay with size {}x{} positioned at ({}, {})", size.width, size.height, position.x, position.y);
 
 		self.state = Some(State::new(window));
 	}
@@ -79,22 +77,29 @@ impl<'a> StateOverlay<'a> {
 	fn calculate_display_area(window: &Window) -> (LogicalPosition<i32>, LogicalSize<u32>) {
 		let available_monitors: Vec<MonitorHandle> = window.available_monitors().collect();
 
-		// For each monitor detected, an accumulator is used to add each monitor's width and height
-		// such that only the required space to cover all monitors is calculated.
-		// And so, the overlay window's position should be where it can cover all monitors.
+		// `min_x` and `max_y` track the position of where the overlay should be rendered. 
+		// This is typically the top-left coordinate across all monitors.
+		// `max_x` and `max_y` track the largest `x + width` and `y + height` values,
+		// which determines where the bottom-right corner across all monitors is.
 
-		// TODO: Change the accumulator to return only the NECESSARY space.
-		available_monitors
-			.iter()
-			.fold((LogicalPosition::default(), LogicalSize::default()), |acc: (LogicalPosition<i32>, LogicalSize<u32>), monitor| {
-				let monitor_position = monitor.position();
-				let monitor_size = monitor.size();
+		let mut min_x = 0;
+		let mut min_y = 0;
+		let mut max_x = 0;
+		let mut max_y = 0;
 
-				(
-					LogicalPosition::new(acc.0.x.min(monitor_position.x), acc.0.y.min(monitor_position.y)),
-					LogicalSize::new(acc.1.width + monitor_size.width, acc.1.height + monitor_size.height)
-				)
-			})
+		for monitor in available_monitors.iter() {
+			let size = monitor.size();
+			let position = monitor.position();
+
+			min_x = min_x.min(position.x);
+			min_y = min_y.min(position.y);
+			max_x = max_x.max(position.x + size.width.cast::<i32>());
+			max_y = max_y.max(position.y + size.height.cast::<i32>());
+		}
+
+		// The difference between the top-left and bottom-right corner yields the resulting rect to be display.
+
+		(LogicalPosition::new(min_x, min_y), LogicalSize::new((max_x - min_x).cast::<u32>(), (max_y - min_y).cast::<u32>()))
 	}
 }
 
