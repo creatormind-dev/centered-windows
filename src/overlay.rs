@@ -7,9 +7,9 @@ use winit::{
 	dpi::{LogicalPosition, LogicalSize, PhysicalSize, Pixel},
 	event::WindowEvent,
 	event_loop::ActiveEventLoop,
-	keyboard::KeyCode,
 	monitor::MonitorHandle,
-	window::{Window, WindowId},
+	platform::windows::{CornerPreference, WindowAttributesExtWindows},
+	window::{Window, WindowButtons, WindowId, WindowLevel}
 };
 
 
@@ -28,17 +28,23 @@ impl<'a> StateOverlay<'a> {
 
 impl<'a> ApplicationHandler for StateOverlay<'a> {
 	fn resumed(&mut self, event_loop: &ActiveEventLoop) {
+		let (position, size) = Self::calculate_display_area(event_loop);
 		let window_attributes = Window::default_attributes()
-			.with_title("Centered Windows")
+			.with_active(true)
+			.with_content_protected(true)
+			.with_corner_preference(CornerPreference::DoNotRound)
 			.with_decorations(false)
+			.with_drag_and_drop(false)
+			.with_enabled_buttons(WindowButtons::empty())
+			.with_inner_size(size)
+			.with_position(position)
 			.with_resizable(false)
-			.with_transparent(true);
+			.with_skip_taskbar(true)
+			.with_title("Centered Windows")
+			.with_transparent(true)
+			.with_window_level(WindowLevel::AlwaysOnTop);
 
 		let window = event_loop.create_window(window_attributes).unwrap();
-		let (position, size) = Self::calculate_display_area(&window);
-
-		let _ = window.request_inner_size(size);
-		window.set_outer_position(position);
 
 		self.state = Some(State::new(window));
 	}
@@ -51,17 +57,20 @@ impl<'a> ApplicationHandler for StateOverlay<'a> {
 				WindowEvent::CloseRequested => {
 					event_loop.exit();
 				},
+				WindowEvent::KeyboardInput { device_id, event, is_synthetic } => {
+					event_loop.exit();
+				},
 				WindowEvent::Resized(physical_size) => {
 					self.state.as_mut().unwrap().resize(physical_size);
 				},
 				WindowEvent::RedrawRequested => {
 					self.state.as_mut().unwrap().render().unwrap();
 				},
-				WindowEvent::KeyboardInput { device_id, event, is_synthetic } => {
-					if event.physical_key == KeyCode::Escape {
+				WindowEvent::Focused(has_focus) => {
+					if has_focus == false {
 						event_loop.exit();
 					}
-				}
+				},
 				_ => ()
 			}
 		}
@@ -80,8 +89,8 @@ impl<'a> StateOverlay<'a> {
 
 	It will return the position and size of the overlay window.
 	*/
-	fn calculate_display_area(window: &Window) -> (LogicalPosition<i32>, LogicalSize<u32>) {
-		let available_monitors: Vec<MonitorHandle> = window.available_monitors().collect();
+	fn calculate_display_area(event_loop: &ActiveEventLoop) -> (LogicalPosition<i32>, LogicalSize<u32>) {
+		let available_monitors: Vec<MonitorHandle> = event_loop.available_monitors().collect();
 
 		// `min_x` and `max_y` track the position of where the overlay should be rendered. 
 		// This is typically the top-left coordinate across all monitors.
