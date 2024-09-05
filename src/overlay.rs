@@ -4,9 +4,10 @@ use std::sync::Arc;
 use pollster::FutureExt;
 use winit::{
 	application::ApplicationHandler,
-	dpi::PhysicalSize,
+	dpi::{LogicalPosition, LogicalSize, PhysicalSize},
 	event::WindowEvent,
 	event_loop::ActiveEventLoop,
+	monitor::MonitorHandle,
 	window::{Window, WindowId},
 };
 
@@ -33,6 +34,13 @@ impl<'a> ApplicationHandler for StateOverlay<'a> {
 			.with_transparent(true);
 
 		let window = event_loop.create_window(window_attributes).unwrap();
+		let (position, size) = Self::calculate_display_area(&window);
+
+		let _ = window.request_inner_size(size);
+		window.set_outer_position(position);
+
+		println!("Overlay with size {}x{} positioned at ({}, {})", size.width, size.height, position.x, position.y);
+
 		self.state = Some(State::new(window));
 	}
 
@@ -59,6 +67,34 @@ impl<'a> ApplicationHandler for StateOverlay<'a> {
 		let window = self.state.as_ref().unwrap().window();
 		
 		window.request_redraw();
+	}
+}
+
+impl<'a> StateOverlay<'a> {
+	/**
+	This function calculates the display area for the overlay window to be rendered.
+
+	It will return the position and size of the overlay window.
+	*/
+	fn calculate_display_area(window: &Window) -> (LogicalPosition<i32>, LogicalSize<u32>) {
+		let available_monitors: Vec<MonitorHandle> = window.available_monitors().collect();
+
+		// For each monitor detected, an accumulator is used to add each monitor's width and height
+		// such that only the required space to cover all monitors is calculated.
+		// And so, the overlay window's position should be where it can cover all monitors.
+
+		// TODO: Change the accumulator to return only the NECESSARY space.
+		available_monitors
+			.iter()
+			.fold((LogicalPosition::default(), LogicalSize::default()), |acc: (LogicalPosition<i32>, LogicalSize<u32>), monitor| {
+				let monitor_position = monitor.position();
+				let monitor_size = monitor.size();
+
+				(
+					LogicalPosition::new(acc.0.x.min(monitor_position.x), acc.0.y.min(monitor_position.y)),
+					LogicalSize::new(acc.1.width + monitor_size.width, acc.1.height + monitor_size.height)
+				)
+			})
 	}
 }
 
