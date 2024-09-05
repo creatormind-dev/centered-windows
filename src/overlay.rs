@@ -7,6 +7,7 @@ use winit::{
 	dpi::{LogicalPosition, LogicalSize, PhysicalSize, Pixel},
 	event::WindowEvent,
 	event_loop::ActiveEventLoop,
+	keyboard::KeyCode,
 	monitor::MonitorHandle,
 	window::{Window, WindowId},
 };
@@ -56,6 +57,11 @@ impl<'a> ApplicationHandler for StateOverlay<'a> {
 				WindowEvent::RedrawRequested => {
 					self.state.as_mut().unwrap().render().unwrap();
 				},
+				WindowEvent::KeyboardInput { device_id, event, is_synthetic } => {
+					if event.physical_key == KeyCode::Escape {
+						event_loop.exit();
+					}
+				}
 				_ => ()
 			}
 		}
