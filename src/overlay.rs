@@ -13,12 +13,12 @@ use winit::{
 };
 
 
-pub struct StateOverlay<'a> {
+pub struct Overlay<'a> {
 	state: Option<State<'a>>,
 }
 
 
-impl<'a> StateOverlay<'a> {
+impl<'a> Overlay<'a> {
 	pub fn new() -> Self {
 		Self {
 			state: None,
@@ -26,7 +26,7 @@ impl<'a> StateOverlay<'a> {
 	}
 }
 
-impl<'a> ApplicationHandler for StateOverlay<'a> {
+impl<'a> ApplicationHandler for Overlay<'a> {
 	fn resumed(&mut self, event_loop: &ActiveEventLoop) {
 		let (position, size) = Self::calculate_display_area(event_loop);
 		let window_attributes = Window::default_attributes()
@@ -83,7 +83,7 @@ impl<'a> ApplicationHandler for StateOverlay<'a> {
 	}
 }
 
-impl<'a> StateOverlay<'a> {
+impl<'a> Overlay<'a> {
 	/**
 	This function calculates the display area for the overlay window to be rendered.
 

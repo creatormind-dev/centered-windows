@@ -1,8 +1,6 @@
-#![forbid(unsafe_code)]
-
 mod overlay;
 
-use overlay::StateOverlay;
+use overlay::Overlay;
 use winit::event_loop::{ControlFlow, EventLoop};
 
 
@@ -13,6 +11,6 @@ fn main() {
     
     event_loop.set_control_flow(ControlFlow::Wait);
 
-    let mut window_state = StateOverlay::new();
+    let mut window_state = Overlay::new();
     let _ = event_loop.run_app(&mut window_state);
 }
