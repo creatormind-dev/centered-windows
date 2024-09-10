@@ -1,3 +1,4 @@
+use crate::display_monitor_info::DisplayMonitorInfo;
 use winit::dpi::{LogicalPosition, LogicalSize};
 
 #[cfg(target_os = "windows")]
@@ -25,20 +26,23 @@ use windows::Win32::{
 /**
 Represents information for an active application window in the operating system.
  */
+#[derive(Debug)]
 pub struct AppWindowInfo {
 	pub title: String,
 
 	pub position: LogicalPosition<i32>,
 	pub size: LogicalSize<u32>,
 
+	monitor: DisplayMonitorInfo,
+
 	#[cfg(target_os = "windows")]
-	hwnd: HWND,
+	handle: HWND,
 }
 
 
 impl AppWindowInfo {
 	/**
-	Returns a tuple containing the coordinates of the window's upper-left and lower-right corners (left, top, right, bottom).
+	Returns a tuple containing the coordinates of the window's bounding rectangle (left, top, right, bottom).
 	 */
 	pub fn rect(&self) -> (i32, i32, i32, i32) {
 		let position = self.position;
@@ -128,6 +132,11 @@ unsafe fn get_win32_window_info(hwnd: HWND) -> Result<AppWindowInfo, ()> {
 		return Err(());
 	}
 
+	let monitor_info = match DisplayMonitorInfo::from_window(hwnd) {
+		Ok(m) => m,
+		Err(_) => return Err(()),
+	};
+
 	let mut buffer = [0u16; 512];
 	let length = GetWindowTextW(hwnd, &mut buffer);
 
@@ -137,7 +146,8 @@ unsafe fn get_win32_window_info(hwnd: HWND) -> Result<AppWindowInfo, ()> {
 	}
 
 	Ok(AppWindowInfo {
-		hwnd,
+		handle: hwnd,
+		monitor: monitor_info,
 		position: LogicalPosition::new(rect.left, rect.top),
 		size: LogicalSize::new((rect.right - rect.left) as u32, (rect.bottom - rect.top) as u32),
 		title: String::from_utf16_lossy(&buffer[..length as usize]),

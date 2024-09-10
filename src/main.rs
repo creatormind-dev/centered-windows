@@ -1,5 +1,6 @@
-mod overlay;
 mod app_window_info;
+mod display_monitor_info;
+mod overlay;
 
 use overlay::Overlay;
 use winit::event_loop::{ControlFlow, EventLoop};
@@ -9,11 +10,7 @@ fn main() {
     env_logger::init();
 
     for window in app_window_info::get_windows() {
-        let title = window.title;
-        let position = window.position;
-        let size = window.size;
-
-        println!("Detected window \"{}\" positioned at ({}, {}) with size {}x{}", title, position.x, position.y, size.width, size.height);
+        println!("{:#?}", window);
     }
 
     let event_loop = EventLoop::new().unwrap();
