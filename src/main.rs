@@ -1,4 +1,5 @@
 mod overlay;
+mod app_window_info;
 
 use overlay::Overlay;
 use winit::event_loop::{ControlFlow, EventLoop};
