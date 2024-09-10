@@ -15,6 +15,11 @@ use windows::Win32::{
 		IsWindow,
 		IsWindowVisible,
 		IsZoomed,
+		SET_WINDOW_POS_FLAGS,
+		SetWindowPos,
+		SWP_NOACTIVATE,
+		SWP_NOSIZE,
+		SWP_NOZORDER,
 		WS_CHILD,
 		WS_EX_APPWINDOW,
 		WS_EX_TOOLWINDOW,
@@ -54,6 +59,33 @@ impl AppWindowInfo {
 			position.x + (size.width as i32),
 			position.y + (size.height as i32),
 		)
+	}
+
+	pub fn center(&self, use_work_area: bool) -> Result<(), String> {
+		let monitor_position = if use_work_area { self.monitor.work_position } else { self.monitor.position };
+		let monitor_size = if use_work_area { self.monitor.work_size } else { self.monitor.size };
+		let x = monitor_position.x + ((monitor_size.width / 2) as i32) - ((self.size.width / 2) as i32);
+		let y = monitor_position.y + ((monitor_size.height / 2) as i32) - ((self.size.height / 2) as i32);
+
+		let mut result: Result<(), String> = Err("Unknown error.".to_string());
+
+		// TODO: Figure out a way to save the window's state so it doesn't revert back when restoring.
+		
+		if cfg!(target_os = "windows") {
+			unsafe {
+				result = SetWindowPos(
+					self.handle,
+					None,
+					x,
+					y,
+					self.size.width as i32,
+					self.size.height as i32,
+					SET_WINDOW_POS_FLAGS(SWP_NOSIZE.0 | SWP_NOZORDER.0 | SWP_NOACTIVATE.0),
+				).map_err(|err| { err.message() });
+			}
+		}
+
+		result
 	}
 }
 
