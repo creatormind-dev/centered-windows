@@ -4,7 +4,7 @@ use std::sync::Arc;
 use pollster::FutureExt;
 use winit::{
 	application::ApplicationHandler,
-	dpi::{LogicalPosition, LogicalSize, PhysicalSize, Pixel},
+	dpi::{LogicalPosition, LogicalSize, PhysicalSize},
 	event::WindowEvent,
 	event_loop::ActiveEventLoop,
 	monitor::MonitorHandle,
@@ -108,13 +108,13 @@ impl<'a> Overlay<'a> {
 
 			min_x = min_x.min(position.x);
 			min_y = min_y.min(position.y);
-			max_x = max_x.max(position.x + size.width.cast::<i32>());
-			max_y = max_y.max(position.y + size.height.cast::<i32>());
+			max_x = max_x.max(position.x + (size.width as i32));
+			max_y = max_y.max(position.y + (size.height as i32));
 		}
 
 		// The difference between the top-left and bottom-right corner yields the resulting rect to be display.
 
-		(LogicalPosition::new(min_x, min_y), LogicalSize::new((max_x - min_x).cast::<u32>(), (max_y - min_y).cast::<u32>()))
+		(LogicalPosition::new(min_x, min_y), LogicalSize::new((max_x - min_x) as u32, (max_y - min_y) as u32))
 	}
 }
 

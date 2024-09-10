@@ -8,13 +8,16 @@ use windows::Win32::{
 		GetWindowRect,
 		GetWindowTextW,
 		GWL_EXSTYLE,
+		GWL_STYLE,
 		GetWindowLongPtrW,
 		IsIconic,
 		IsWindow,
 		IsWindowVisible,
 		IsZoomed,
+		WS_CHILD,
 		WS_EX_APPWINDOW,
 		WS_EX_TOOLWINDOW,
+		WS_POPUP,
 	}
 };
 
@@ -30,6 +33,24 @@ pub struct AppWindowInfo {
 
 	#[cfg(target_os = "windows")]
 	hwnd: HWND,
+}
+
+
+impl AppWindowInfo {
+	/**
+	Returns a tuple containing the coordinates of the window's upper-left and lower-right corners (left, top, right, bottom).
+	 */
+	pub fn rect(&self) -> (i32, i32, i32, i32) {
+		let position = self.position;
+		let size = self.size;
+
+		(
+			position.x,
+			position.y,
+			position.x + (size.width as i32),
+			position.y + (size.height as i32),
+		)
+	}
 }
 
 
@@ -76,10 +97,16 @@ unsafe fn get_win32_window_info(hwnd: HWND) -> Result<AppWindowInfo, ()> {
 		return Err(());
 	}
 
-	let extended_windows_style = GetWindowLongPtrW(hwnd, GWL_EXSTYLE) as u32;
+	let ex_ws_style = GetWindowLongPtrW(hwnd, GWL_EXSTYLE) as u32;
 
 	// Check if the window isn't a toolbar or other type of widget.
-	if (extended_windows_style & WS_EX_TOOLWINDOW.0) != 0 && (extended_windows_style & WS_EX_APPWINDOW.0) == 0 {
+	if (ex_ws_style & WS_EX_TOOLWINDOW.0) != 0 && (ex_ws_style & WS_EX_APPWINDOW.0) == 0 {
+		return Err(());
+	}
+
+	let style = GetWindowLongPtrW(hwnd, GWL_STYLE) as u32;
+
+	if (style & WS_CHILD.0) != 0 || (style & WS_POPUP.0) != 0 {
 		return Err(());
 	}
 
