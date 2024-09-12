@@ -1,4 +1,5 @@
 use crate::display_monitor_info::DisplayMonitorInfo;
+
 use winit::dpi::{LogicalPosition, LogicalSize};
 
 #[cfg(target_os = "windows")]
@@ -59,6 +60,12 @@ impl AppWindowInfo {
 			position.x + (size.width as i32),
 			position.y + (size.height as i32),
 		)
+	}
+
+	pub fn contains(&self, x: i32, y: i32) -> bool {
+		let (left, top, right, bottom) = self.rect();
+		
+		x >= left && x <= right && y >= top && y <= bottom
 	}
 
 	pub fn center(&self, use_work_area: bool) -> Result<(), String> {

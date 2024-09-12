@@ -1,7 +1,9 @@
 #![forbid(unsafe_code)]
 
 use std::sync::Arc;
+
 use pollster::FutureExt;
+
 use winit::{
 	application::ApplicationHandler,
 	dpi::{LogicalPosition, LogicalSize, PhysicalSize},
@@ -40,7 +42,6 @@ impl<'a> ApplicationHandler for Overlay<'a> {
 			.with_position(position)
 			.with_resizable(false)
 			.with_skip_taskbar(true)
-			.with_title("Centered Windows")
 			.with_transparent(true)
 			.with_window_level(WindowLevel::AlwaysOnTop);
 
@@ -57,19 +58,19 @@ impl<'a> ApplicationHandler for Overlay<'a> {
 				WindowEvent::CloseRequested => {
 					event_loop.exit();
 				},
-				WindowEvent::KeyboardInput { device_id, event, is_synthetic } => {
+				WindowEvent::KeyboardInput { .. } => {
 					event_loop.exit();
 				},
 				WindowEvent::Resized(physical_size) => {
 					self.state.as_mut().unwrap().resize(physical_size);
 				},
-				WindowEvent::RedrawRequested => {
-					self.state.as_mut().unwrap().render().unwrap();
-				},
 				WindowEvent::Focused(has_focus) => {
 					if has_focus == false {
 						event_loop.exit();
 					}
+				},
+				WindowEvent::RedrawRequested => {
+					self.state.as_mut().unwrap().render().unwrap();
 				},
 				_ => ()
 			}
@@ -199,6 +200,8 @@ impl<'a> State<'a> {
 		}
 	}
 
+	pub fn update(&mut self) {}
+
 	pub fn resize(&mut self, new_size: PhysicalSize<u32>) {
         self.size = new_size;
 
@@ -208,7 +211,7 @@ impl<'a> State<'a> {
         self.surface.configure(&self.device, &self.config);
     }
 
-	fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
+	pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
 		let output = self.surface.get_current_texture().unwrap();
 		let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
 
@@ -244,7 +247,7 @@ impl<'a> State<'a> {
 		Ok(())
 	}
 
-	fn window(&self) -> &Window {
+	pub fn window(&self) -> &Window {
 		&self.window
 	}
 }
