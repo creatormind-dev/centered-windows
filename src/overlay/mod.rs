@@ -19,7 +19,6 @@ pub struct OverlayApp<'a> {
 	state: Option<State<'a>>,
 }
 
-
 impl<'a> OverlayApp<'a> {
 	pub fn new() -> Self {
 		Self {
@@ -62,14 +61,12 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
 		}
 
 		match event {
-			WindowEvent::CloseRequested => {
-				event_loop.exit();
-			},
+			WindowEvent::CloseRequested |
 			WindowEvent::KeyboardInput { .. } => {
 				event_loop.exit();
 			},
 			WindowEvent::Resized(physical_size) => {
-				self.state.as_mut().unwrap().resize(physical_size);
+				state.resize(physical_size);
 			},
 			WindowEvent::Focused(has_focus) => {
 				if has_focus == false {
@@ -77,7 +74,14 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
 				}
 			},
 			WindowEvent::RedrawRequested => {
-				self.state.as_mut().unwrap().render().unwrap();
+				state.update();
+
+				match state.render() {
+					Ok(_) => (),
+					Err(wgpu::SurfaceError::Lost) => state.resize(state.size),
+					Err(wgpu::SurfaceError::OutOfMemory) => event_loop.exit(),
+					Err(e) => eprintln!("{}", e),
+				}
 			},
 			_ => ()
 		}

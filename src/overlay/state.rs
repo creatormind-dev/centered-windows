@@ -9,19 +9,22 @@ use winit::{
 
 
 pub struct State<'a> {
+	pub size: PhysicalSize<u32>,
+
 	surface: wgpu::Surface<'a>,
 	device: wgpu::Device,
 	queue: wgpu::Queue,
 	config: wgpu::SurfaceConfiguration,
 
-	size: PhysicalSize<u32>,
 	window: Arc<Window>,
 }
+
 
 impl<'a> State<'a> {
 	pub fn new(window: Window) -> Self {
 		let window_arc = Arc::new(window);
 		let size = window_arc.inner_size();
+
 		let instance = Self::create_gpu_instance();
 		let surface = instance.create_surface(window_arc.clone()).unwrap();
 		let adapter = Self::create_adapter(instance, &surface);
@@ -87,7 +90,10 @@ impl<'a> State<'a> {
 			desired_maximum_frame_latency: 2,
 		}
 	}
+}
 
+
+impl<'a> State<'a> {
 	pub fn update(&mut self) { }
 
 	pub fn resize(&mut self, new_size: PhysicalSize<u32>) {
@@ -100,7 +106,7 @@ impl<'a> State<'a> {
     }
 
 	pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
-		let output = self.surface.get_current_texture().unwrap();
+		let output = self.surface.get_current_texture()?;
 		let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
 
 		let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
@@ -108,25 +114,29 @@ impl<'a> State<'a> {
 		});
 
 		{
-			let _render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-				label: Some("Render Pass"),
-				color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-					view: &view,
-					resolve_target: None,
-					ops: wgpu::Operations {
-						load: wgpu::LoadOp::Clear(wgpu::Color {
-							r: 0.0,
-							g: 0.0,
-							b: 0.0,
-							a: 0.4,
-						}),
-						store: wgpu::StoreOp::Store,
-					}
-				})],
-				depth_stencil_attachment: None,
-				occlusion_query_set: None,
-				timestamp_writes: None,
-			});
+			let _render_pass = encoder.begin_render_pass(
+				&wgpu::RenderPassDescriptor {
+					label: Some("Render Pass"),
+					color_attachments: &[
+						Some(wgpu::RenderPassColorAttachment {
+							view: &view,
+							resolve_target: None,
+							ops: wgpu::Operations {
+								load: wgpu::LoadOp::Clear(wgpu::Color {
+									r: 0.0,
+									g: 0.0,
+									b: 0.0,
+									a: 0.4,
+								}),
+								store: wgpu::StoreOp::Store,
+							},
+						},
+					)],
+					depth_stencil_attachment: None,
+					occlusion_query_set: None,
+					timestamp_writes: None,
+				},
+			);
 		}
 
 		self.queue.submit(std::iter::once(encoder.finish()));
