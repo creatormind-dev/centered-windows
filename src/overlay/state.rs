@@ -52,29 +52,36 @@ impl<'a> State<'a> {
 	}
 
 	fn create_adapter(instance: wgpu::Instance, surface: &wgpu::Surface) -> wgpu::Adapter {
-		instance.request_adapter(
-			&wgpu::RequestAdapterOptions {
-				power_preference: wgpu::PowerPreference::default(),
-				compatible_surface: Some(&surface),
-				force_fallback_adapter: false,
-			}
-		).block_on().unwrap()
+		instance
+			.request_adapter(
+				&wgpu::RequestAdapterOptions {
+					power_preference: wgpu::PowerPreference::default(),
+					compatible_surface: Some(&surface),
+					force_fallback_adapter: false,
+				}
+			)
+			.block_on()
+			.unwrap()
 	}
 
 	fn create_device(adapter: &wgpu::Adapter) -> (wgpu::Device, wgpu::Queue) {
-		adapter.request_device(
-			&wgpu::DeviceDescriptor {
-				required_features: wgpu::Features::empty(),
-				required_limits: wgpu::Limits::default(),
-				memory_hints: wgpu::MemoryHints::default(),
-				label: None,
-			},
-			None
-		).block_on().unwrap()
+		adapter
+			.request_device(
+				&wgpu::DeviceDescriptor {
+					required_features: wgpu::Features::empty(),
+					required_limits: wgpu::Limits::default(),
+					memory_hints: wgpu::MemoryHints::default(),
+					label: None,
+				},
+				None
+			)
+			.block_on()
+			.unwrap()
 	}
 
 	fn create_surface_config(size: PhysicalSize<u32>, capabilities: wgpu::SurfaceCapabilities) -> wgpu::SurfaceConfiguration {
-		let surface_format = capabilities.formats.iter()
+		let surface_format = capabilities.formats
+			.iter()
 			.find(|f| f.is_srgb())
 			.copied()
 			.unwrap_or(capabilities.formats[0]);
@@ -94,8 +101,6 @@ impl<'a> State<'a> {
 
 
 impl<'a> State<'a> {
-	pub fn update(&mut self) { }
-
 	pub fn resize(&mut self, new_size: PhysicalSize<u32>) {
         self.size = new_size;
 

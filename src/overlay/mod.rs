@@ -30,6 +30,7 @@ impl<'a> OverlayApp<'a> {
 impl<'a> ApplicationHandler for OverlayApp<'a> {
 	fn resumed(&mut self, event_loop: &ActiveEventLoop) {
 		let (position, size) = Self::calculate_display_area(event_loop);
+
 		let window_attributes = Window::default_attributes()
 			.with_active(true)
 			.with_content_protected(true)
@@ -74,8 +75,6 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
 				}
 			},
 			WindowEvent::RedrawRequested => {
-				state.update();
-
 				match state.render() {
 					Ok(_) => (),
 					Err(wgpu::SurfaceError::Lost) => state.resize(state.size),
@@ -98,7 +97,7 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
 
 impl<'a> OverlayApp<'a> {
 	/**
-	This function calculates the display area for the overlay window to be rendered.
+	This function calculates the display area for the overlay window to be rendered on.
 
 	It will return the position and size of the overlay window.
 	*/
