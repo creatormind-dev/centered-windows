@@ -15,6 +15,7 @@ pub struct State<'a> {
 	device: wgpu::Device,
 	queue: wgpu::Queue,
 	config: wgpu::SurfaceConfiguration,
+	render_pipeline: wgpu::RenderPipeline,
 
 	window: Arc<Window>,
 }
@@ -25,7 +26,7 @@ impl<'a> State<'a> {
 		let window_arc = Arc::new(window);
 		let size = window_arc.inner_size();
 
-		let instance = Self::create_gpu_instance();
+		let instance = Self::create_instance();
 		let surface = instance.create_surface(window_arc.clone()).unwrap();
 		let adapter = Self::create_adapter(instance, &surface);
 		let (device, queue) = Self::create_device(&adapter);
@@ -34,17 +35,22 @@ impl<'a> State<'a> {
 
 		surface.configure(&device, &config);
 
+		let render_pipeline = Self::create_render_pipeline(&device, &config);
+
 		Self {
+			size,
+
 			surface,
 			device,
 			queue,
 			config,
-			size,
+			render_pipeline,
+
 			window: window_arc,
 		}
 	}
 
-	fn create_gpu_instance() -> wgpu::Instance {
+	fn create_instance() -> wgpu::Instance {
 		wgpu::Instance::new(wgpu::InstanceDescriptor {
 			backends: wgpu::Backends::all(),
 			..Default::default()
@@ -96,6 +102,63 @@ impl<'a> State<'a> {
 			view_formats: vec![],
 			desired_maximum_frame_latency: 2,
 		}
+	}
+
+	fn create_render_pipeline(device: &wgpu::Device, config: &wgpu::SurfaceConfiguration) -> wgpu::RenderPipeline {
+		let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+			label: None,
+			source: wgpu::ShaderSource::Wgsl(include_str!("../shader.wgsl").into()),
+		});
+
+		let layout = device.create_pipeline_layout(
+			&wgpu::PipelineLayoutDescriptor {
+				label: Some("Render Pipeline Layout"),
+				bind_group_layouts: &[],
+				push_constant_ranges: &[],
+			},
+		);
+
+		device.create_render_pipeline(
+			&wgpu::RenderPipelineDescriptor {
+				label: Some("Render Pipeline"),
+				layout: Some(&layout),
+				vertex: wgpu::VertexState {
+					module: &shader,
+					entry_point: "vs_main",
+					compilation_options: wgpu::PipelineCompilationOptions::default(),
+					buffers: &[],
+				},
+				fragment: Some(wgpu::FragmentState {
+					module: &shader,
+					entry_point: "fs_main",
+					compilation_options: wgpu::PipelineCompilationOptions::default(),
+					targets: &[
+						Some(wgpu::ColorTargetState {
+							format: config.format,
+							blend: Some(wgpu::BlendState::REPLACE),
+							write_mask: wgpu::ColorWrites::ALL,
+						}),
+					],
+				}),
+				primitive: wgpu::PrimitiveState {
+					topology: wgpu::PrimitiveTopology::TriangleList,
+					strip_index_format: None,
+					front_face: wgpu::FrontFace::Ccw,
+					cull_mode: Some(wgpu::Face::Back),
+					polygon_mode: wgpu::PolygonMode::Fill,
+					unclipped_depth: false,
+					conservative: false,
+				},
+				depth_stencil: None,
+				multisample: wgpu::MultisampleState {
+					count: 1,
+					mask: !0,
+					alpha_to_coverage_enabled: false,
+				},
+				multiview: None,
+				cache: None,
+			},
+		)
 	}
 }
 
