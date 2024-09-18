@@ -1,11 +1,52 @@
-use std::sync::Arc;
-
 use pollster::FutureExt;
+use wgpu::util::DeviceExt;
 
+use std::sync::Arc;
 use winit::{
 	dpi::PhysicalSize,
 	window::Window,
 };
+
+
+/**
+Defines the input model for a Vertex in the shader.
+ */
+#[repr(C)]
+#[derive(Clone, Copy, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+pub struct Vertex {
+	position: [f32; 2],
+}
+
+// TODO: Remove hardcoded vertices and indices.
+
+const VERTICES: &[Vertex] = &[
+	Vertex { position: [0.5, 0.75] },
+	Vertex { position: [-0.5, 0.75] },
+	Vertex { position: [-0.5, -0.75] },
+	Vertex { position: [0.5, -0.75] },
+];
+
+const INDICES: &[u16] = &[0, 1, 2, 0, 2, 3];
+
+impl Vertex {
+	fn desc() -> wgpu::VertexBufferLayout<'static> {
+		use std::mem;
+
+		wgpu::VertexBufferLayout {
+			array_stride: mem::size_of::<Self>() as wgpu::BufferAddress,
+			step_mode: wgpu::VertexStepMode::Vertex,
+			attributes: &[
+				wgpu::VertexAttribute {
+					// No offset because this is the first (and only) attribute.
+					offset: 0,
+					// Corresponds to @location(0) in the shader code.
+					shader_location: 0,
+					format: wgpu::VertexFormat::Float32x2,
+				}
+			],
+		}
+	}
+}
 
 
 pub struct State<'a> {
@@ -86,6 +127,7 @@ impl<'a> State<'a> {
 	}
 
 	fn create_surface_config(size: PhysicalSize<u32>, capabilities: wgpu::SurfaceCapabilities) -> wgpu::SurfaceConfiguration {
+		// Looks for a sRGB compatible surface.
 		let surface_format = capabilities.formats
 			.iter()
 			.find(|f| f.is_srgb())
@@ -126,7 +168,9 @@ impl<'a> State<'a> {
 					module: &shader,
 					entry_point: "vs_main",
 					compilation_options: wgpu::PipelineCompilationOptions::default(),
-					buffers: &[],
+					buffers: &[
+						Vertex::desc(),
+					],
 				},
 				fragment: Some(wgpu::FragmentState {
 					module: &shader,
@@ -160,10 +204,34 @@ impl<'a> State<'a> {
 			},
 		)
 	}
+
+	fn create_vertex_buffer(device: &wgpu::Device, vertices: &[Vertex]) -> wgpu::Buffer {
+		device.create_buffer_init(
+			&wgpu::util::BufferInitDescriptor {
+				label: Some("Vertex Buffer"),
+				contents: bytemuck::cast_slice(vertices),
+				usage: wgpu::BufferUsages::VERTEX,
+			},
+		)
+	}
+
+	fn create_index_buffer(device: &wgpu::Device, indices: &[u16]) -> wgpu::Buffer {
+		device.create_buffer_init(
+			&wgpu::util::BufferInitDescriptor {
+				label: Some("Index Buffer"),
+				contents: bytemuck::cast_slice(indices),
+				usage: wgpu::BufferUsages::INDEX,
+			},
+		)
+	}
 }
 
 
 impl<'a> State<'a> {
+	pub fn window(&self) -> &Window {
+		&self.window
+	}
+
 	pub fn resize(&mut self, new_size: PhysicalSize<u32>) {
         self.size = new_size;
 
@@ -182,7 +250,7 @@ impl<'a> State<'a> {
 		});
 
 		{
-			let _render_pass = encoder.begin_render_pass(
+			let mut render_pass = encoder.begin_render_pass(
 				&wgpu::RenderPassDescriptor {
 					label: Some("Render Pass"),
 					color_attachments: &[
@@ -194,7 +262,7 @@ impl<'a> State<'a> {
 									r: 0.0,
 									g: 0.0,
 									b: 0.0,
-									a: 0.4,
+									a: 1.0,
 								}),
 								store: wgpu::StoreOp::Store,
 							},
@@ -205,15 +273,19 @@ impl<'a> State<'a> {
 					timestamp_writes: None,
 				},
 			);
+
+			let vertex_buffer = Self::create_vertex_buffer(&self.device, VERTICES);
+			let index_buffer = Self::create_index_buffer(&self.device, INDICES);
+
+			render_pass.set_pipeline(&self.render_pipeline);
+			render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
+			render_pass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+			render_pass.draw_indexed(0..INDICES.len() as _, 0, 0..1);
 		}
 
 		self.queue.submit(std::iter::once(encoder.finish()));
 		output.present();
 
 		Ok(())
-	}
-
-	pub fn window(&self) -> &Window {
-		&self.window
 	}
 }
