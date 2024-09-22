@@ -10,9 +10,11 @@ use winit::{
     event::WindowEvent,
     event_loop::ActiveEventLoop,
     monitor::MonitorHandle,
-    platform::windows::{CornerPreference, WindowAttributesExtWindows},
     window::{Window, WindowButtons, WindowId, WindowLevel}
 };
+
+#[cfg(target_os = "windows")]
+use winit::platform::windows::{CornerPreference, WindowAttributesExtWindows};
 
 
 pub struct OverlayApp<'a> {
@@ -34,16 +36,20 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
         let window_attributes = Window::default_attributes()
             .with_active(true)
             .with_content_protected(true)
-            .with_corner_preference(CornerPreference::DoNotRound)
             .with_decorations(false)
-            .with_drag_and_drop(false)
             .with_enabled_buttons(WindowButtons::empty())
             .with_inner_size(size)
             .with_position(position)
             .with_resizable(false)
-            .with_skip_taskbar(true)
             .with_transparent(true)
             .with_window_level(WindowLevel::AlwaysOnTop);
+
+        // Specific window settings on Windows OS.
+        #[cfg(target_os = "windows")]
+        let window_attributes = window_attributes
+            .with_corner_preference(CornerPreference::DoNotRound)
+            .with_drag_and_drop(false)
+            .with_skip_taskbar(true);
 
         let window = event_loop.create_window(window_attributes).unwrap();
 
@@ -65,24 +71,38 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
             WindowEvent::CloseRequested |
             WindowEvent::KeyboardInput { .. } => {
                 event_loop.exit();
-            },
+            }
+
             WindowEvent::Resized(physical_size) => {
                 state.resize(physical_size);
-            },
+            }
+
             WindowEvent::Focused(has_focus) => {
                 if has_focus == false {
                     event_loop.exit();
                 }
-            },
+            }
+
             WindowEvent::RedrawRequested => {
                 match state.render() {
-                    Ok(_) => (),
-                    Err(wgpu::SurfaceError::Lost) => state.resize(state.size),
-                    Err(wgpu::SurfaceError::OutOfMemory) => event_loop.exit(),
-                    Err(e) => eprintln!("{}", e),
+                    Ok(_) => {}
+
+                    Err(wgpu::SurfaceError::Lost |
+                        wgpu::SurfaceError::Outdated) => {
+                        state.resize(state.size)
+                    }
+
+                    Err(wgpu::SurfaceError::OutOfMemory) => {
+                        event_loop.exit()
+                    }
+
+                    Err(wgpu::SurfaceError::Timeout) => {
+                        log::warn!("Surface Timeout!");
+                    }
                 }
-            },
-            _ => ()
+            }
+
+            _ => {}
         }
     }
 
