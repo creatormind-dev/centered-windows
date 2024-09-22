@@ -156,8 +156,8 @@ impl WindowInfo {
     }
 
     pub fn center(&self, use_work_area: bool) -> Result<(), Box<dyn Error>> {
-        let monitor_position = if use_work_area { self.monitor.work_position } else { self.monitor.position };
-        let monitor_size = if use_work_area { self.monitor.work_size } else { self.monitor.size };
+        let monitor_position = self.monitor.position;
+        let monitor_size = self.monitor.size;
         let x = monitor_position.x + ((monitor_size.width / 2) as i32) - ((self.size.width / 2) as i32);
         let y = monitor_position.y + ((monitor_size.height / 2) as i32) - ((self.size.height / 2) as i32);
         
