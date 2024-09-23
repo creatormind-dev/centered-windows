@@ -6,7 +6,7 @@ use wgpu::util::DeviceExt;
 use std::sync::Arc;
 use winit::{
     application::ApplicationHandler,
-    dpi::{LogicalPosition, LogicalSize, PhysicalSize},
+    dpi::{PhysicalPosition, PhysicalSize},
     event::WindowEvent,
     event_loop::ActiveEventLoop,
     monitor::MonitorHandle,
@@ -121,7 +121,9 @@ impl<'a> OverlayApp<'a> {
 
     It will return the position and size of the overlay window.
     */
-    pub fn calculate_display_area(event_loop: &ActiveEventLoop) -> (LogicalPosition<i32>, LogicalSize<u32>) {
+    pub fn calculate_display_area(
+        event_loop: &ActiveEventLoop
+    ) -> (PhysicalPosition<i32>, PhysicalSize<u32>) {
         let available_monitors: Vec<MonitorHandle> = event_loop.available_monitors().collect();
 
         // `min_x` and `max_y` track the position of where the overlay should be rendered.
@@ -146,7 +148,10 @@ impl<'a> OverlayApp<'a> {
 
         // The difference between the top-left and bottom-right corner yields the resulting rect to be display.
 
-        (LogicalPosition::new(min_x, min_y), LogicalSize::new((max_x - min_x) as u32, (max_y - min_y) as u32))
+        (
+            PhysicalPosition::new(min_x, min_y),
+            PhysicalSize::new((max_x - min_x) as u32, (max_y - min_y) as u32)
+        )
     }
 }
 
@@ -173,10 +178,8 @@ const INDICES: &[u16] = &[0, 1, 2, 0, 2, 3];
 
 impl Vertex {
     fn desc() -> wgpu::VertexBufferLayout<'static> {
-        use std::mem;
-
         wgpu::VertexBufferLayout {
-            array_stride: mem::size_of::<Self>() as wgpu::BufferAddress,
+            array_stride: size_of::<Self>() as wgpu::BufferAddress,
             step_mode: wgpu::VertexStepMode::Vertex,
             attributes: &[
                 wgpu::VertexAttribute {
@@ -269,7 +272,10 @@ impl<'a> State<'a> {
             .unwrap()
     }
 
-    fn create_surface_config(size: PhysicalSize<u32>, capabilities: wgpu::SurfaceCapabilities) -> wgpu::SurfaceConfiguration {
+    fn create_surface_config(
+        size: PhysicalSize<u32>,
+        capabilities: wgpu::SurfaceCapabilities
+    ) -> wgpu::SurfaceConfiguration {
         // Looks for a sRGB compatible surface.
         let surface_format = capabilities.formats
             .iter()
@@ -289,7 +295,10 @@ impl<'a> State<'a> {
         }
     }
 
-    fn create_render_pipeline(device: &wgpu::Device, config: &wgpu::SurfaceConfiguration) -> wgpu::RenderPipeline {
+    fn create_render_pipeline(
+        device: &wgpu::Device,
+        config: &wgpu::SurfaceConfiguration
+    ) -> wgpu::RenderPipeline {
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: None,
             source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
