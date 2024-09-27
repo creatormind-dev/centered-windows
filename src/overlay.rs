@@ -444,7 +444,7 @@ impl<'a> State<'a> {
                 },
             );
             
-            if let _clip = Some(self.clip) {
+            if let Some(_clip) = self.clip {
                 let vertex_buffer = Self::create_vertex_buffer(&self.device, VERTICES);
                 let index_buffer = Self::create_index_buffer(&self.device, INDICES);
 
