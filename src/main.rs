@@ -6,7 +6,10 @@ use winit::event_loop::{ControlFlow, EventLoop};
 
 
 fn main() {
-    env_logger::init();
+    env_logger::builder()
+        .format_target(false)
+        .format_module_path(false)
+        .init();
 
     let event_loop = EventLoop::new().unwrap();
     let mut app = OverlayApp::new();

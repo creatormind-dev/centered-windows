@@ -1,7 +1,7 @@
-#![forbid(unsafe_code)]
-
 use pollster::FutureExt;
 use wgpu::util::DeviceExt;
+
+use crate::data;
 
 use std::sync::Arc;
 use winit::{
@@ -19,19 +19,33 @@ use winit::platform::windows::{CornerPreference, WindowAttributesExtWindows};
 
 pub struct OverlayApp<'a> {
     state: Option<State<'a>>,
+    monitors: Vec<data::MonitorInfo>,
+    windows: Vec<data::WindowInfo>,
 }
 
 impl<'a> OverlayApp<'a> {
     pub fn new() -> Self {
         Self {
             state: None,
+            monitors: Vec::new(),
+            windows: Vec::new(),
         }
     }
 }
 
 impl<'a> ApplicationHandler for OverlayApp<'a> {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-        let (position, size) = Self::calculate_display_area(event_loop);
+        let available_monitors: Vec<MonitorHandle> = event_loop.available_monitors().collect();
+        
+        let monitors = data::get_monitors(&available_monitors).unwrap_or_else(|e| {
+            panic!("Could not enumerate display monitors: {e}");
+        });
+        
+        let windows = data::get_windows().unwrap_or_else(|e| {
+            panic!("Could not enumerate application windows: {e}");
+        });
+        
+        let (position, size) = Self::calculate_display_area(&available_monitors);
 
         let window_attributes = Window::default_attributes()
             .with_active(true)
@@ -52,8 +66,10 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
             .with_skip_taskbar(true);
 
         let window = event_loop.create_window(window_attributes).unwrap();
-
+        
         self.state = Some(State::new(window));
+        self.monitors = monitors;
+        self.windows = windows;
     }
 
     fn window_event(&mut self, event_loop: &ActiveEventLoop, window_id: WindowId, event: WindowEvent) {
@@ -61,9 +77,7 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
             .as_mut()
             .unwrap();
 
-        let window = state.window();
-
-        if window.id() != window_id {
+        if state.window.id() != window_id {
             return;
         }
 
@@ -81,6 +95,10 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
                 if has_focus == false {
                     event_loop.exit();
                 }
+            }
+            
+            WindowEvent::CursorMoved { .. } => {
+                // TODO: Implement cursor position intersects with window.
             }
 
             WindowEvent::RedrawRequested => {
@@ -122,10 +140,8 @@ impl<'a> OverlayApp<'a> {
     It will return the position and size of the overlay window.
     */
     pub fn calculate_display_area(
-        event_loop: &ActiveEventLoop
+        monitors: &[MonitorHandle]
     ) -> (PhysicalPosition<i32>, PhysicalSize<u32>) {
-        let available_monitors: Vec<MonitorHandle> = event_loop.available_monitors().collect();
-
         // `min_x` and `max_y` track the position of where the overlay should be rendered.
         // This is typically the top-left coordinate across all monitors.
         // `max_x` and `max_y` track the largest `x + width` and `y + height` values,
@@ -136,7 +152,7 @@ impl<'a> OverlayApp<'a> {
         let mut max_x = 0;
         let mut max_y = 0;
 
-        for monitor in available_monitors.iter() {
+        for monitor in monitors.iter() {
             let size = monitor.size();
             let position = monitor.position();
 
@@ -195,14 +211,15 @@ impl Vertex {
 }
 
 
-pub struct State<'a> {
-    pub size: PhysicalSize<u32>,
+struct State<'a> {
+    size: PhysicalSize<u32>,
 
     surface: wgpu::Surface<'a>,
     device: wgpu::Device,
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
     render_pipeline: wgpu::RenderPipeline,
+    clip: Option<data::WindowInfo>,
 
     window: Arc<Window>,
 }
@@ -232,6 +249,7 @@ impl<'a> State<'a> {
             queue,
             config,
             render_pipeline,
+            clip: None,
 
             window: window_arc,
         }
@@ -425,14 +443,16 @@ impl<'a> State<'a> {
                     timestamp_writes: None,
                 },
             );
+            
+            if let _clip = Some(self.clip) {
+                let vertex_buffer = Self::create_vertex_buffer(&self.device, VERTICES);
+                let index_buffer = Self::create_index_buffer(&self.device, INDICES);
 
-            let vertex_buffer = Self::create_vertex_buffer(&self.device, VERTICES);
-            let index_buffer = Self::create_index_buffer(&self.device, INDICES);
-
-            render_pass.set_pipeline(&self.render_pipeline);
-            render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
-            render_pass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-            render_pass.draw_indexed(0..INDICES.len() as _, 0, 0..1);
+                render_pass.set_pipeline(&self.render_pipeline);
+                render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
+                render_pass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+                render_pass.draw_indexed(0..INDICES.len() as _, 0, 0..1);
+            }
         }
 
         self.queue.submit(std::iter::once(encoder.finish()));
