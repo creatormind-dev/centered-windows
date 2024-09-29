@@ -1,13 +1,8 @@
 use std::fmt;
 
-use bytemuck::Contiguous;
-
 use std::error::Error;
 use std::fmt::Formatter;
-use winit::{
-    dpi::{PhysicalPosition, PhysicalSize},
-    monitor::MonitorHandle,
-};
+use winit::dpi::{PhysicalPosition, PhysicalSize};
 
 #[cfg(target_os = "windows")]
 use windows::Win32::{
@@ -41,8 +36,6 @@ use windows::Win32::{
         WS_POPUP,
     }
 };
-#[cfg(target_os = "windows")]
-use winit::platform::windows::MonitorHandleExtWindows;
 
 
 #[derive(Debug, Clone)]
@@ -61,8 +54,13 @@ impl fmt::Display for GenericError {
 impl Error for GenericError {}
 
 
+/**
+Represents the bounding rectangle of a quad.
+
+Not to be confused with the Windows API RECT struct.
+*/
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Default)]
 pub struct Rect {
     left: i32,
     top: i32,
@@ -71,16 +69,10 @@ pub struct Rect {
 }
 
 impl Rect {
-    pub fn new(position: &PhysicalPosition<i32>, size: &PhysicalSize<u32>) -> Rect {
-        Self {
-            left: position.x,
-            top: position.y,
-            right: position.x + size.width as i32,
-            bottom: position.y + size.height as i32,
-        }
-    }
-    
-    pub fn raw(x: i32, y: i32, w: u32, h: u32) -> Rect {
+    /**
+    Constructs a new Rect from a position and a size.
+    */
+    pub fn new(x: i32, y: i32, w: u32, h: u32) -> Rect {
         Self {
             left: x,
             top: y,
@@ -89,7 +81,11 @@ impl Rect {
         }
     }
     
-    pub fn adjust(rect: &Rect, base: &Rect) -> Rect {
+    /**
+    Given a `base` rect, a new rect is created with a transformation applied to the provided `rect`
+    so it becomes relative to the `base` rect.
+    */
+    pub fn adjust(rect: Rect, base: Rect) -> Rect {
         let left = rect.left - base.left;
         let top = rect.top - base.top;
         let right = left + (rect.right - rect.left);
@@ -101,6 +97,21 @@ impl Rect {
             right,
             bottom
         }
+    }
+    
+    /**
+    Checks whether the given coordinate is contained by the bounding rect.
+    */
+    pub fn contains(&self, x: i32, y: i32) -> bool {
+        x >= self.left && x < self.right && y >= self.top && y < self.bottom
+    }
+    
+    /**
+    Returns a tuple containing the four attributes of a rect: (left, top, right, bottom) to allow
+    for data manipulation of the bounding rect.
+    */
+    pub fn raw(&self) -> (i32, i32, i32, i32) {
+        (self.left, self.top, self.right, self.bottom)
     }
 }
 
@@ -209,7 +220,12 @@ impl WindowInfo {
     }
     
     pub fn rect(&self) -> Rect {
-        Rect::new(&self.position, &self.size)
+        Rect::new(
+            self.position.x,
+            self.position.y,
+            self.size.width,
+            self.size.height,
+        )
     }
 }
 
@@ -255,22 +271,6 @@ impl MonitorInfo {
     }
 }
 
-
-pub fn get_monitors(handles: &[MonitorHandle]) -> Result<Vec<MonitorInfo>, Box<dyn Error>> {
-    let mut monitors: Vec<MonitorInfo> = Vec::new();
-    
-    for monitor in handles.iter() {
-        #[cfg(target_os = "windows")]
-        unsafe {
-            let handle = HMONITOR(monitor.hmonitor().into_integer() as *mut std::ffi::c_void);
-            let info = MonitorInfo::build(handle)?;
-            
-            monitors.push(info);
-        }
-    }
-    
-    Ok(monitors)
-}
 
 /**
 Returns a list of the currently active and visible application windows in the operating system.

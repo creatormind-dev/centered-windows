@@ -19,7 +19,7 @@ use winit::platform::windows::{CornerPreference, WindowAttributesExtWindows};
 
 pub struct OverlayApp<'a> {
     state: Option<State<'a>>,
-    monitors: Vec<data::MonitorInfo>,
+    
     windows: Vec<data::WindowInfo>,
 }
 
@@ -27,7 +27,6 @@ impl<'a> OverlayApp<'a> {
     pub fn new() -> Self {
         Self {
             state: None,
-            monitors: Vec::new(),
             windows: Vec::new(),
         }
     }
@@ -35,17 +34,11 @@ impl<'a> OverlayApp<'a> {
 
 impl<'a> ApplicationHandler for OverlayApp<'a> {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-        let available_monitors: Vec<MonitorHandle> = event_loop.available_monitors().collect();
-        
-        let monitors = data::get_monitors(&available_monitors).unwrap_or_else(|e| {
-            panic!("Could not enumerate display monitors: {e}");
-        });
-        
         let windows = data::get_windows().unwrap_or_else(|e| {
             panic!("Could not enumerate application windows: {e}");
         });
         
-        let (position, size) = Self::calculate_display_area(&available_monitors);
+        let (position, size) = Self::calculate_display_area(&event_loop);
 
         let window_attributes = Window::default_attributes()
             .with_active(true)
@@ -66,30 +59,8 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
             .with_skip_taskbar(true);
 
         let window = event_loop.create_window(window_attributes).unwrap();
-
-        // TODO: Remove this. (START)
-        
-        let overlay_rect = data::Rect::raw(
-            position.x,
-            position.y,
-            size.width,
-            size.height,
-        );
-
-        log::debug!("Overlay RECT: {:?}", overlay_rect);
-        
-        for w in windows.iter() {
-            let window_rect = w.rect();
-            let adjusted_rect = data::Rect::adjust(&window_rect, &overlay_rect);
-            
-            log::debug!("Window RECT: {:?}", window_rect);
-            log::debug!("Adjusted Window RECT: {:?}", adjusted_rect);
-        }
-        
-        // TODO: Remove this. (END)
         
         self.state = Some(State::new(window));
-        self.monitors = monitors;
         self.windows = windows;
     }
 
@@ -118,8 +89,30 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
                 }
             }
             
-            WindowEvent::CursorMoved { .. } => {
-                // TODO: Implement cursor position intersects with window.
+            WindowEvent::CursorMoved { position, .. } => {
+                let clip = state.clip.unwrap_or(data::Rect::default());
+
+                // If there is already a defined clip in the state, check if the same clip contains
+                // the cursor coordinates to avoid fetching the same window rect multiple times.
+                // If the clip is None the contains function will return false.
+                
+                if !clip.contains(position.x as i32, position.y as i32) {
+                    let overlay_pos = state.window().inner_position().unwrap();
+                    let overlay_size = state.size;
+                    let overlay_rect = data::Rect::new(
+                        overlay_pos.x,
+                        overlay_pos.y,
+                        overlay_size.width,
+                        overlay_size.height,
+                    );
+
+                    let clip = self.windows
+                        .iter()
+                        .map(|w| data::Rect::adjust(w.rect(), overlay_rect))
+                        .find(|r| r.contains(position.x as i32, position.y as i32));
+
+                    state.clip = clip;
+                }
             }
 
             WindowEvent::RedrawRequested => {
@@ -161,7 +154,7 @@ impl<'a> OverlayApp<'a> {
     It will return the position and size of the overlay window.
     */
     pub fn calculate_display_area(
-        monitors: &[MonitorHandle]
+        event_loop: &ActiveEventLoop
     ) -> (PhysicalPosition<i32>, PhysicalSize<u32>) {
         // `min_x` and `max_y` track the position of where the overlay should be rendered.
         // This is typically the top-left coordinate across all monitors.
@@ -173,7 +166,7 @@ impl<'a> OverlayApp<'a> {
         let mut max_x = 0;
         let mut max_y = 0;
 
-        for monitor in monitors.iter() {
+        for monitor in event_loop.available_monitors() {
             let size = monitor.size();
             let position = monitor.position();
 
@@ -202,17 +195,6 @@ struct Vertex {
     position: [f32; 2],
 }
 
-// TODO: Remove hardcoded vertices and indices.
-
-const VERTICES: &[Vertex] = &[
-    Vertex { position: [0.5, 0.75] },
-    Vertex { position: [-0.5, 0.75] },
-    Vertex { position: [-0.5, -0.75] },
-    Vertex { position: [0.5, -0.75] },
-];
-
-const INDICES: &[u16] = &[0, 1, 2, 0, 2, 3];
-
 impl Vertex {
     fn desc() -> wgpu::VertexBufferLayout<'static> {
         wgpu::VertexBufferLayout {
@@ -232,6 +214,10 @@ impl Vertex {
 }
 
 
+// These indices will always make a quad where the initial vertex is the top-right point. 
+const INDICES: &[u16] = &[0, 1, 2, 0, 2, 3];
+
+
 struct State<'a> {
     size: PhysicalSize<u32>,
 
@@ -240,7 +226,7 @@ struct State<'a> {
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
     render_pipeline: wgpu::RenderPipeline,
-    clip: Option<data::WindowInfo>,
+    clip: Option<data::Rect>,
 
     window: Arc<Window>,
 }
@@ -419,10 +405,6 @@ impl<'a> State<'a> {
 
 
 impl<'a> State<'a> {
-    pub fn window(&self) -> &Window {
-        &self.window
-    }
-
     pub fn resize(&mut self, new_size: PhysicalSize<u32>) {
         self.size = new_size;
 
@@ -449,6 +431,7 @@ impl<'a> State<'a> {
                             view: &view,
                             resolve_target: None,
                             ops: wgpu::Operations {
+                                // Default clear color is Black with 40% opacity.
                                 load: wgpu::LoadOp::Clear(wgpu::Color {
                                     r: 0.0,
                                     g: 0.0,
@@ -465,8 +448,33 @@ impl<'a> State<'a> {
                 },
             );
             
-            if let Some(_clip) = self.clip {
-                let vertex_buffer = Self::create_vertex_buffer(&self.device, VERTICES);
+            // If there is a "clip" rect, this will call the shader code and provide the same clipping
+            // area to "cut" a quad in the overlay.
+            // Otherwise, the overlay will be fully rendered with the provided color attachment.
+            if let Some(clip) = self.clip {
+                // The initial point (0, 0) of the render area in WebGPU is the middle of the screen area.
+                // By halving the width and height of the overlay, the initial point is acquired.
+                let center_x = self.size.width as f32 / 2.0;
+                let center_y = self.size.height as f32 / 2.0;
+
+                // A transformation is applied to the clipping rect to remap it to the overlay's
+                // coordinates. The top (1) and bottom (3) are multiplied by -1 to invert the coordinates. 
+                let rect = clip.raw();
+                let (left, top, right, bottom) = (
+                    rect.0 as f32 - center_x,
+                    (rect.1 as f32 - center_y) * -1.0,
+                    rect.2 as f32 - center_x,
+                    (rect.3 as f32 - center_y) * -1.0,
+                );
+                
+                let vertices = &[
+                    Vertex { position: [right / center_x, top / center_y] },
+                    Vertex { position: [left / center_x, top / center_y] },
+                    Vertex { position: [left / center_x, bottom / center_y] },
+                    Vertex { position: [right / center_x, bottom / center_y] },
+                ];
+
+                let vertex_buffer = Self::create_vertex_buffer(&self.device, vertices);
                 let index_buffer = Self::create_index_buffer(&self.device, INDICES);
 
                 render_pass.set_pipeline(&self.render_pipeline);
@@ -480,5 +488,9 @@ impl<'a> State<'a> {
         output.present();
 
         Ok(())
+    }
+
+    pub fn window(&self) -> &Window {
+        &self.window
     }
 }
