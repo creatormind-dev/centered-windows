@@ -66,6 +66,27 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
             .with_skip_taskbar(true);
 
         let window = event_loop.create_window(window_attributes).unwrap();
+
+        // TODO: Remove this. (START)
+        
+        let overlay_rect = data::Rect::raw(
+            position.x,
+            position.y,
+            size.width,
+            size.height,
+        );
+
+        log::debug!("Overlay RECT: {:?}", overlay_rect);
+        
+        for w in windows.iter() {
+            let window_rect = w.rect();
+            let adjusted_rect = data::Rect::adjust(&window_rect, &overlay_rect);
+            
+            log::debug!("Window RECT: {:?}", window_rect);
+            log::debug!("Adjusted Window RECT: {:?}", adjusted_rect);
+        }
+        
+        // TODO: Remove this. (END)
         
         self.state = Some(State::new(window));
         self.monitors = monitors;

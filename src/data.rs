@@ -53,12 +53,56 @@ enum GenericError {
 impl fmt::Display for GenericError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", match self {
-            Self::InvalidData => "Invalid data"
+            Self::InvalidData => "invalid data"
         })
     }
 }
 
 impl Error for GenericError {}
+
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct Rect {
+    left: i32,
+    top: i32,
+    right: i32,
+    bottom: i32,
+}
+
+impl Rect {
+    pub fn new(position: &PhysicalPosition<i32>, size: &PhysicalSize<u32>) -> Rect {
+        Self {
+            left: position.x,
+            top: position.y,
+            right: position.x + size.width as i32,
+            bottom: position.y + size.height as i32,
+        }
+    }
+    
+    pub fn raw(x: i32, y: i32, w: u32, h: u32) -> Rect {
+        Self {
+            left: x,
+            top: y,
+            right: x + w as i32,
+            bottom: y + h as i32,
+        }
+    }
+    
+    pub fn adjust(rect: &Rect, base: &Rect) -> Rect {
+        let left = rect.left - base.left;
+        let top = rect.top - base.top;
+        let right = left + (rect.right - rect.left);
+        let bottom = top + (rect.bottom - rect.top);
+        
+        Rect {
+            left,
+            top,
+            right,
+            bottom
+        }
+    }
+}
 
 
 /**
@@ -154,6 +198,18 @@ impl WindowInfo {
         }
 
         Ok(())
+    }
+    
+    pub fn position(&self) -> &PhysicalPosition<i32> {
+        &self.position
+    }
+    
+    pub fn size(&self) -> &PhysicalSize<u32> {
+        &self.size
+    }
+    
+    pub fn rect(&self) -> Rect {
+        Rect::new(&self.position, &self.size)
     }
 }
 
