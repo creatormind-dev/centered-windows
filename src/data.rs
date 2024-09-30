@@ -75,10 +75,6 @@ impl PartialEq for Rect {
         && self.right == other.right
         && self.bottom == other.bottom
     }
-
-    fn ne(&self, other: &Self) -> bool {
-        !self.eq(other)
-    }
 }
 
 impl Rect {

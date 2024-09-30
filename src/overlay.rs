@@ -1,7 +1,7 @@
 use pollster::FutureExt;
 use wgpu::util::DeviceExt;
 
-use crate::data;
+use crate::data::*;
 
 use std::sync::Arc;
 use winit::{
@@ -19,7 +19,7 @@ use winit::platform::windows::{CornerPreference, WindowAttributesExtWindows};
 pub struct OverlayApp<'a> {
     state: Option<State<'a>>,
     
-    windows: Vec<data::WindowInfo>,
+    windows: Vec<WindowInfo>,
 }
 
 impl<'a> OverlayApp<'a> {
@@ -33,7 +33,7 @@ impl<'a> OverlayApp<'a> {
 
 impl<'a> ApplicationHandler for OverlayApp<'a> {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-        let windows = data::get_windows().unwrap_or_else(|e| {
+        let windows = get_windows().unwrap_or_else(|e| {
             panic!("Could not enumerate application windows: {e}");
         });
         
@@ -74,7 +74,7 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
 
         let overlay_pos = state.window().inner_position().unwrap();
         let overlay_size = state.size;
-        let overlay_rect = data::Rect::new(
+        let overlay_rect = Rect::new(
             overlay_pos.x,
             overlay_pos.y,
             overlay_size.width,
@@ -98,7 +98,7 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
             }
             
             WindowEvent::CursorMoved { position, .. } => {
-                let clip = state.clip.unwrap_or(data::Rect::default());
+                let clip = state.clip.unwrap_or(Rect::default());
 
                 // If there is already a defined clip in the state, check if the same clip contains
                 // the cursor coordinates to avoid fetching the same window rect multiple times.
@@ -107,7 +107,7 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
                 if !clip.contains(position.x as i32, position.y as i32) {
                     let clip = self.windows
                         .iter()
-                        .map(|w| data::Rect::adjust(w.rect(), overlay_rect))
+                        .map(|w| Rect::adjust(w.rect(), overlay_rect))
                         .find(|r| r.contains(position.x as i32, position.y as i32));
 
                     state.clip = clip;
@@ -125,7 +125,7 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
                         .iter()
                         .enumerate()
                         .find(|(_, w)| {
-                            let rect = data::Rect::adjust(w.rect(), overlay_rect);
+                            let rect = Rect::adjust(w.rect(), overlay_rect);
                             rect == clip
                         });
                     
@@ -249,7 +249,7 @@ struct State<'a> {
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
     render_pipeline: wgpu::RenderPipeline,
-    clip: Option<data::Rect>,
+    clip: Option<Rect>,
 
     window: Arc<Window>,
 }
