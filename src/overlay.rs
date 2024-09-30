@@ -7,9 +7,8 @@ use std::sync::Arc;
 use winit::{
     application::ApplicationHandler,
     dpi::{PhysicalPosition, PhysicalSize},
-    event::WindowEvent,
+    event::{ElementState, MouseButton, WindowEvent},
     event_loop::ActiveEventLoop,
-    monitor::MonitorHandle,
     window::{Window, WindowButtons, WindowId, WindowLevel}
 };
 
@@ -73,6 +72,15 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
             return;
         }
 
+        let overlay_pos = state.window().inner_position().unwrap();
+        let overlay_size = state.size;
+        let overlay_rect = data::Rect::new(
+            overlay_pos.x,
+            overlay_pos.y,
+            overlay_size.width,
+            overlay_size.height,
+        );
+
         match event {
             WindowEvent::CloseRequested |
             WindowEvent::KeyboardInput { .. } => {
@@ -97,21 +105,37 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
                 // If the clip is None the contains function will return false.
                 
                 if !clip.contains(position.x as i32, position.y as i32) {
-                    let overlay_pos = state.window().inner_position().unwrap();
-                    let overlay_size = state.size;
-                    let overlay_rect = data::Rect::new(
-                        overlay_pos.x,
-                        overlay_pos.y,
-                        overlay_size.width,
-                        overlay_size.height,
-                    );
-
                     let clip = self.windows
                         .iter()
                         .map(|w| data::Rect::adjust(w.rect(), overlay_rect))
                         .find(|r| r.contains(position.x as i32, position.y as i32));
 
                     state.clip = clip;
+                }
+            }
+            
+            WindowEvent::MouseInput {
+                state: ElementState::Pressed,
+                button: MouseButton::Left,
+                ..
+            } => {
+                // TODO: Handle mouse click on window to center it.
+                if let Some(clip) = state.clip {
+                    
+                    let enum_window_maybe = self.windows
+                        .iter()
+                        .enumerate()
+                        .find(|(_, w)| {
+                            let rect = data::Rect::adjust(w.rect(), overlay_rect);
+                            rect == clip
+                        });
+                    
+                    if let Some((index, window)) = enum_window_maybe {
+                        window.center().expect("Could not center the window");
+                        
+                        self.windows.remove(index);
+                        state.clip = None;
+                    }
                 }
             }
 

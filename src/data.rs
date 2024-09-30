@@ -68,6 +68,19 @@ pub struct Rect {
     bottom: i32,
 }
 
+impl PartialEq for Rect {
+    fn eq(&self, other: &Self) -> bool {
+        self.left == other.left
+        && self.top == other.top
+        && self.right == other.right
+        && self.bottom == other.bottom
+    }
+
+    fn ne(&self, other: &Self) -> bool {
+        !self.eq(other)
+    }
+}
+
 impl Rect {
     /**
     Constructs a new Rect from a position and a size.
@@ -187,6 +200,15 @@ impl WindowInfo {
 }
 
 impl WindowInfo {
+    pub fn is_centered(&self) -> bool {
+        let monitor_position = self.monitor.position;
+        let monitor_size = self.monitor.size;
+        let x = monitor_position.x + ((monitor_size.width / 2) as i32) - ((self.size.width / 2) as i32);
+        let y = monitor_position.y + ((monitor_size.height / 2) as i32) - ((self.size.height / 2) as i32);
+        
+        self.position.x == x && self.position.y == y
+    }
+    
     pub fn center(&self) -> Result<(), Box<dyn Error>> {
         let monitor_position = self.monitor.position;
         let monitor_size = self.monitor.size;
@@ -209,14 +231,6 @@ impl WindowInfo {
         }
 
         Ok(())
-    }
-    
-    pub fn position(&self) -> &PhysicalPosition<i32> {
-        &self.position
-    }
-    
-    pub fn size(&self) -> &PhysicalSize<u32> {
-        &self.size
     }
     
     pub fn rect(&self) -> Rect {
@@ -283,7 +297,12 @@ pub fn get_windows() -> Result<Vec<WindowInfo>, Box<dyn Error>> {
         EnumWindows(Some(window_enum_proc), LPARAM(&mut windows as *mut _ as isize))?;
     }
 
-    Ok(windows)
+    Ok(
+        windows.iter()
+            .filter(|w| !w.is_centered())
+            .cloned()
+            .collect()
+    )
 }
 
 #[cfg(target_os = "windows")]
