@@ -119,7 +119,6 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
                 button: MouseButton::Left,
                 ..
             } => {
-                // TODO: Handle mouse click on window to center it.
                 if let Some(clip) = state.clip {
                     
                     let enum_window_maybe = self.windows
