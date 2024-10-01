@@ -23,7 +23,6 @@ use windows::Win32::{
     UI::WindowsAndMessaging::{
 
         EnumWindows,
-        GetWindowRect,
         GetWindowTextLengthW,
         GWL_EXSTYLE,
         GWL_STYLE,
