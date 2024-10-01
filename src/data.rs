@@ -7,14 +7,21 @@ use winit::dpi::{PhysicalPosition, PhysicalSize};
 #[cfg(target_os = "windows")]
 use windows::Win32::{
     Foundation::{BOOL, HWND, LPARAM, RECT, TRUE},
-    Graphics::Gdi::{
-        GetMonitorInfoW,
-        HMONITOR,
-        MONITOR_DEFAULTTONEAREST,
-        MonitorFromWindow,
-        MONITORINFO
+    Graphics::{
+        Dwm::{
+            DwmGetWindowAttribute,
+            DWMWA_EXTENDED_FRAME_BOUNDS,
+        },
+        Gdi::{
+            GetMonitorInfoW,
+            HMONITOR,
+            MONITOR_DEFAULTTONEAREST,
+            MonitorFromWindow,
+            MONITORINFO
+        }
     },
     UI::WindowsAndMessaging::{
+
         EnumWindows,
         GetWindowRect,
         GetWindowTextLengthW,
@@ -174,7 +181,14 @@ impl WindowInfo {
 
         let mut rect = RECT::default();
 
-        GetWindowRect(hwnd, &mut rect)?;
+        // The DwmGetWindowAttribute function is needed to obtain the RECT of the window without
+        // the drop shadow that is present ever since Vista. You will be missed, GetWindowRect...
+        DwmGetWindowAttribute(
+            hwnd,
+            DWMWA_EXTENDED_FRAME_BOUNDS,
+            &mut rect as *mut _ as *mut _,
+            size_of::<RECT>() as u32,
+        )?;
 
         let hmonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
         let monitor_info = MonitorInfo::build(hmonitor)?;
@@ -220,8 +234,8 @@ impl WindowInfo {
                 None,
                 x,
                 y,
-                self.size.width as i32,
-                self.size.height as i32,
+                0, // This gets ignored because of the no size flag.
+                0, // This gets ignored because of the no size flag.
                 SET_WINDOW_POS_FLAGS(SWP_NOSIZE.0 | SWP_NOZORDER.0 | SWP_NOACTIVATE.0),
             )?;
         }
