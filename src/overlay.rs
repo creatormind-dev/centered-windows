@@ -9,11 +9,11 @@ use winit::{
     dpi::{PhysicalPosition, PhysicalSize},
     event::{ElementState, MouseButton, WindowEvent},
     event_loop::ActiveEventLoop,
-    window::{Window, WindowButtons, WindowId, WindowLevel}
+    window::{Icon, Window, WindowButtons, WindowId, WindowLevel}
 };
 
 #[cfg(target_os = "windows")]
-use winit::platform::windows::{CornerPreference, WindowAttributesExtWindows};
+use winit::platform::windows::{CornerPreference, IconExtWindows, WindowAttributesExtWindows};
 
 
 pub struct OverlayApp<'a> {
@@ -55,7 +55,13 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
         let window_attributes = window_attributes
             .with_corner_preference(CornerPreference::DoNotRound)
             .with_drag_and_drop(false)
-            .with_skip_taskbar(true);
+            .with_taskbar_icon(match Icon::from_path("icon.ico", None) {
+                Ok(icon) => Some(icon),
+                Err(e) => {
+                    log::warn!("Could not load icon: {e}");
+                    None
+                },
+            });
 
         let window = event_loop.create_window(window_attributes).unwrap();
         
