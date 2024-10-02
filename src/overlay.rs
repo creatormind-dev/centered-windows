@@ -9,7 +9,14 @@ use winit::{
     dpi::{PhysicalPosition, PhysicalSize},
     event::{ElementState, MouseButton, WindowEvent},
     event_loop::ActiveEventLoop,
-    window::{Icon, Window, WindowButtons, WindowId, WindowLevel}
+    window::{
+        CursorIcon,
+        Icon,
+        Window,
+        WindowButtons,
+        WindowId,
+        WindowLevel
+    },
 };
 
 #[cfg(target_os = "windows")]
@@ -73,12 +80,14 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
         let state = self.state
             .as_mut()
             .unwrap();
+        
+        let window = state.window();
 
-        if state.window.id() != window_id {
+        if window.id() != window_id {
             return;
         }
 
-        let overlay_pos = state.window().inner_position().unwrap();
+        let overlay_pos = window.inner_position().unwrap();
         let overlay_size = state.size;
         let overlay_rect = Rect::new(
             overlay_pos.x,
@@ -105,6 +114,11 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
             
             WindowEvent::CursorMoved { position, .. } => {
                 let clip = state.clip.unwrap_or(Rect::default());
+                
+                window.set_cursor(match state.clip {
+                    Some(_) => CursorIcon::Pointer,
+                    None => CursorIcon::Default,
+                });
 
                 // If there is already a defined clip in the state, check if the same clip contains
                 // the cursor coordinates to avoid fetching the same window rect multiple times.
@@ -125,6 +139,10 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
                 button: MouseButton::Left,
                 ..
             } => {
+                // The click event will only be processed if the cursor is over a window that can
+                // be centered, a.k.a. a clip is defined. It will then remove said window from the
+                // available windows list.
+                
                 if let Some(clip) = state.clip {
                     
                     let enum_window_maybe = self.windows
@@ -136,7 +154,8 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
                         });
                     
                     if let Some((index, window)) = enum_window_maybe {
-                        window.center().expect("Could not center the window");
+                        window.center()
+                            .expect("Could not center the window");
                         
                         self.windows.remove(index);
                         state.clip = None;
