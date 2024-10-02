@@ -44,6 +44,12 @@ use windows::Win32::{
 };
 
 
+/**
+The GenericError enum is a common way to express that a process for window or monitor handling
+didn't go well.
+
+This is more so just an indicator of an error without any actual weight.
+*/
 #[derive(Debug, Clone)]
 enum GenericError {
     InvalidData
@@ -260,9 +266,6 @@ Represents information for a display screen (monitor) detected in the system.
 pub struct MonitorInfo {
     position: PhysicalPosition<i32>,
     size: PhysicalSize<u32>,
-
-    #[cfg(target_os = "windows")]
-    handle: HMONITOR,
 }
 
 #[cfg(target_os = "windows")]
@@ -272,10 +275,7 @@ impl MonitorInfo {
             return Err(GenericError::InvalidData.into());
         }
 
-        let mut monitor_info = MONITORINFO {
-            cbSize: size_of::<MONITORINFO>() as u32,
-            ..Default::default()
-        };
+        let mut monitor_info = MONITORINFO::default();
         
         if GetMonitorInfoW(handle, &mut monitor_info).as_bool() == false {
             return Err(GenericError::InvalidData.into());
@@ -284,7 +284,6 @@ impl MonitorInfo {
         let rect = monitor_info.rcMonitor;
 
         Ok(Self {
-            handle,
             position: PhysicalPosition::new(rect.left, rect.top),
             size: PhysicalSize::new(
                 (rect.right - rect.left) as u32,
@@ -303,8 +302,13 @@ pub fn get_windows() -> Result<Vec<WindowInfo>, Box<dyn Error>> {
 
     #[cfg(target_os = "windows")]
     unsafe {
-        EnumWindows(Some(window_enum_proc), LPARAM(&mut windows as *mut _ as isize))?;
+        EnumWindows(
+            Some(window_enum_proc),
+            LPARAM(&mut windows as *mut _ as isize) // Casting to an isize pointer.
+        )?;
     }
+
+    // Filtering is applied to exclude windows that are already centered.
 
     Ok(
         windows.iter()
@@ -320,10 +324,12 @@ unsafe extern "system" fn window_enum_proc(hwnd: HWND, lparam: LPARAM) -> BOOL {
         Ok(w) => w,
         Err(_) => {
             // Continues enumeration of windows, skipping the invalid window.
+            // Returning false would instead end the enumeration.
             return TRUE;
         }
     };
 
+    // Casting of LPARAM pointer to a Vec.
     let window_list = &mut *(lparam.0 as *mut Vec<WindowInfo>);
 
     window_list.push(window);
