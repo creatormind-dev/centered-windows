@@ -23,7 +23,7 @@ use windows::Win32::{
     UI::WindowsAndMessaging::{
 
         EnumWindows,
-        GetWindowTextLengthW,
+        GetWindowTextW,
         GWL_EXSTYLE,
         GWL_STYLE,
         GetWindowLongPtrW,
@@ -57,8 +57,8 @@ enum GenericError {
 
 impl fmt::Display for GenericError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", match self {
-            Self::InvalidData => "invalid data"
+        write!(f, "Generic Data Error: {}", match self {
+            Self::InvalidData => "invalid data",
         })
     }
 }
@@ -140,8 +140,11 @@ impl Rect {
 /**
 Represents information for an active application window in the operating system.
  */
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug)]
 pub struct WindowInfo {
+    #[allow(dead_code)]
+    title: String,
+    
     position: PhysicalPosition<i32>,
     size: PhysicalSize<u32>,
 
@@ -170,6 +173,8 @@ impl WindowInfo {
         }
 
         let style = GetWindowLongPtrW(hwnd, GWL_STYLE) as u32;
+        
+        // TODO: Allow for granular control of sub-windows.
 
         if (style & WS_CHILD.0) != 0 || (style & WS_POPUP.0) != 0 {
             return Err(GenericError::InvalidData.into());
@@ -177,10 +182,6 @@ impl WindowInfo {
 
         // A window should be visible, otherwise it could be an overlay or hidden process.
         if IsWindowVisible(hwnd).as_bool() == false {
-            return Err(GenericError::InvalidData.into());
-        }
-        
-        if IsIconic(hwnd).as_bool() == true || IsZoomed(hwnd).as_bool() == true {
             return Err(GenericError::InvalidData.into());
         }
 
@@ -198,7 +199,8 @@ impl WindowInfo {
         let hmonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
         let monitor_info = MonitorInfo::build(hmonitor)?;
         
-        let length = GetWindowTextLengthW(hwnd);
+        let mut buffer = [0u16; 1024]; 
+        let length = GetWindowTextW(hwnd, &mut buffer);
 
         // Same as before. Most windows without a title are other type of processes.
         if length == 0 {
@@ -208,9 +210,18 @@ impl WindowInfo {
         Ok(Self {
             handle: hwnd,
             monitor: monitor_info,
+            title: String::from_utf16_lossy(&buffer[..length as usize]),
             position: PhysicalPosition::new(rect.left, rect.top),
             size: PhysicalSize::new((rect.right - rect.left) as u32, (rect.bottom - rect.top) as u32),
         })
+    }
+    
+    unsafe fn is_maximized(&self) -> bool {
+        IsZoomed(self.handle).as_bool()
+    }
+    
+    unsafe fn is_minimized(&self) -> bool {
+        IsIconic(self.handle).as_bool()
     }
 }
 
@@ -275,7 +286,10 @@ impl MonitorInfo {
             return Err(GenericError::InvalidData.into());
         }
 
-        let mut monitor_info = MONITORINFO::default();
+        let mut monitor_info = MONITORINFO {
+            cbSize: size_of::<MONITORINFO>() as u32,
+            ..Default::default()
+        };
         
         if GetMonitorInfoW(handle, &mut monitor_info).as_bool() == false {
             return Err(GenericError::InvalidData.into());
@@ -310,12 +324,7 @@ pub fn get_windows() -> Result<Vec<WindowInfo>, Box<dyn Error>> {
 
     // Filtering is applied to exclude windows that are already centered.
 
-    Ok(
-        windows.iter()
-            .filter(|w| !w.is_centered())
-            .cloned()
-            .collect()
-    )
+    Ok(windows)
 }
 
 #[cfg(target_os = "windows")]
@@ -328,6 +337,11 @@ unsafe extern "system" fn window_enum_proc(hwnd: HWND, lparam: LPARAM) -> BOOL {
             return TRUE;
         }
     };
+    
+    // There's no point in repositioning these windows.
+    if window.is_maximized() || window.is_minimized() || window.is_centered() {
+        return TRUE;
+    }
 
     // Casting of LPARAM pointer to a Vec.
     let window_list = &mut *(lparam.0 as *mut Vec<WindowInfo>);

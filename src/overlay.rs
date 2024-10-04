@@ -54,6 +54,7 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
             .with_inner_size(size)
             .with_position(position)
             .with_resizable(false)
+            .with_title("Centered Windows")
             .with_transparent(true)
             .with_window_level(WindowLevel::AlwaysOnTop);
 
@@ -144,7 +145,6 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
                 // available windows list.
                 
                 if let Some(clip) = state.clip {
-                    
                     let enum_window_maybe = self.windows
                         .iter()
                         .enumerate()
@@ -479,7 +479,7 @@ impl<'a> State<'a> {
                             view: &view,
                             resolve_target: None,
                             ops: wgpu::Operations {
-                                // Default clear color is Black with 40% opacity.
+                                // Default clear color is Black with 60% opacity.
                                 load: wgpu::LoadOp::Clear(wgpu::Color {
                                     r: 0.0,
                                     g: 0.0,
