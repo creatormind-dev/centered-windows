@@ -154,6 +154,21 @@ pub struct WindowInfo {
     handle: HWND,
 }
 
+impl fmt::Display for WindowInfo {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{:?} ({}, {}) [{}x{}] {}",
+            self.handle,
+            self.position.x,
+            self.position.y,
+            self.size.width,
+            self.size.height,
+            self.title
+        )
+    }
+}
+
 #[cfg(target_os = "windows")]
 impl WindowInfo {
     unsafe fn build(hwnd: HWND) -> Result<Self, Box<dyn Error>> {
@@ -318,11 +333,9 @@ pub fn get_windows() -> Result<Vec<WindowInfo>, Box<dyn Error>> {
     unsafe {
         EnumWindows(
             Some(window_enum_proc),
-            LPARAM(&mut windows as *mut _ as isize) // Casting to an isize pointer.
+            LPARAM(&mut windows as *mut _ as isize) // Casting to a mutable pointer.
         )?;
     }
-
-    // Filtering is applied to exclude windows that are already centered.
 
     Ok(windows)
 }
@@ -342,6 +355,8 @@ unsafe extern "system" fn window_enum_proc(hwnd: HWND, lparam: LPARAM) -> BOOL {
     if window.is_maximized() || window.is_minimized() || window.is_centered() {
         return TRUE;
     }
+
+    log::debug!("Window: {window}");
 
     // Casting of LPARAM pointer to a Vec.
     let window_list = &mut *(lparam.0 as *mut Vec<WindowInfo>);

@@ -77,7 +77,12 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
         self.windows = windows;
     }
 
-    fn window_event(&mut self, event_loop: &ActiveEventLoop, window_id: WindowId, event: WindowEvent) {
+    fn window_event(
+        &mut self,
+        event_loop: &ActiveEventLoop,
+        window_id: WindowId,
+        event: WindowEvent
+    ) {
         let state = self.state
             .as_mut()
             .unwrap();
@@ -87,15 +92,6 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
         if window.id() != window_id {
             return;
         }
-
-        let overlay_pos = window.inner_position().unwrap();
-        let overlay_size = state.size;
-        let overlay_rect = Rect::new(
-            overlay_pos.x,
-            overlay_pos.y,
-            overlay_size.width,
-            overlay_size.height,
-        );
 
         match event {
             WindowEvent::CloseRequested |
@@ -114,6 +110,7 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
             }
             
             WindowEvent::CursorMoved { position, .. } => {
+                let overlay_rect = state.rect();
                 let clip = state.clip.unwrap_or(Rect::default());
                 
                 window.set_cursor(match state.clip {
@@ -145,7 +142,9 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
                 // available windows list.
                 
                 if let Some(clip) = state.clip {
-                    let enum_window_maybe = self.windows
+                    let overlay_rect = state.rect();
+                    
+                    let found_window = self.windows
                         .iter()
                         .enumerate()
                         .find(|(_, w)| {
@@ -153,11 +152,13 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
                             rect == clip
                         });
                     
-                    if let Some((index, window)) = enum_window_maybe {
-                        window.center()
+                    if let Some((index, app_window)) = found_window {
+                        app_window.center()
                             .expect("Could not center the window");
                         
                         self.windows.remove(index);
+                        
+                        window.set_cursor(CursorIcon::Default);
                         state.clip = None;
                     }
                 }
@@ -536,6 +537,18 @@ impl<'a> State<'a> {
         output.present();
 
         Ok(())
+    }
+    
+    pub fn rect(&self) -> Rect {
+        let position = self.window.inner_position().unwrap();
+        let size = self.size;
+        
+        Rect::new(
+            position.x,
+            position.y,
+            size.width,
+            size.height,
+        )
     }
 
     pub fn window(&self) -> &Window {
