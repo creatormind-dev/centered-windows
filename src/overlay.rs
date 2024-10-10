@@ -3,6 +3,7 @@ use wgpu::util::DeviceExt;
 
 use crate::data::*;
 
+use log::{error, warn};
 use std::sync::Arc;
 use winit::{
     application::ApplicationHandler,
@@ -66,7 +67,7 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
             .with_taskbar_icon(match Icon::from_path("icon.ico", None) {
                 Ok(icon) => Some(icon),
                 Err(e) => {
-                    log::warn!("Could not load icon: {e}");
+                    warn!("Could not load taskbar icon: {e}");
                     None
                 },
             });
@@ -174,11 +175,12 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
                     }
 
                     Err(wgpu::SurfaceError::OutOfMemory) => {
+                        error!("Out of memory!");
                         event_loop.exit()
                     }
 
                     Err(wgpu::SurfaceError::Timeout) => {
-                        log::warn!("Surface Timeout!");
+                        warn!("Surface Timeout!");
                     }
                 }
             }

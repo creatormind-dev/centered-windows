@@ -1,5 +1,6 @@
 use std::fmt;
 
+use log::{debug, info};
 use std::error::Error;
 use std::fmt::Formatter;
 use winit::dpi::{PhysicalPosition, PhysicalSize};
@@ -270,6 +271,8 @@ impl WindowInfo {
                 SET_WINDOW_POS_FLAGS(SWP_NOSIZE.0 | SWP_NOZORDER.0 | SWP_NOACTIVATE.0),
             )?;
         }
+        
+        info!("Repositioned window to the center: {self}");
 
         Ok(())
     }
@@ -356,7 +359,7 @@ unsafe extern "system" fn window_enum_proc(hwnd: HWND, lparam: LPARAM) -> BOOL {
         return TRUE;
     }
 
-    log::debug!("Window: {window}");
+    debug!("Collected window: {window}");
 
     // Casting of LPARAM pointer to a Vec.
     let window_list = &mut *(lparam.0 as *mut Vec<WindowInfo>);
