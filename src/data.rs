@@ -272,7 +272,7 @@ impl WindowInfo {
             )?;
         }
         
-        info!("Repositioned window to the center: {self}");
+        debug!("Repositioned window to the center: {self}");
 
         Ok(())
     }
@@ -338,6 +338,10 @@ pub fn get_windows() -> Result<Vec<WindowInfo>, Box<dyn Error>> {
             Some(window_enum_proc),
             LPARAM(&mut windows as *mut _ as isize) // Casting to a mutable pointer.
         )?;
+    }
+
+    if windows.is_empty() {
+        info!("No windows found.");
     }
 
     Ok(windows)

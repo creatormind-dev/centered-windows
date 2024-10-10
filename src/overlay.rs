@@ -3,7 +3,7 @@ use wgpu::util::DeviceExt;
 
 use crate::data::*;
 
-use log::{error, warn};
+use log::{debug, error, info, warn};
 use std::sync::Arc;
 use winit::{
     application::ApplicationHandler,
@@ -73,6 +73,14 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
             });
 
         let window = event_loop.create_window(window_attributes).unwrap();
+        
+        debug!(
+            "Overlay window with position ({}, {}) and size [{}x{}] created.",
+            position.x,
+            position.y,
+            size.width,
+            size.height
+        );
         
         self.state = Some(State::new(window));
         self.windows = windows;
@@ -196,6 +204,10 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
             .window()
             .request_redraw();
     }
+
+    fn exiting(&mut self, _event_loop: &ActiveEventLoop) {
+        info!("Termination requested. Exiting...");
+    }
 }
 
 impl<'a> OverlayApp<'a> {
@@ -298,6 +310,8 @@ impl<'a> State<'a> {
         surface.configure(&device, &config);
 
         let render_pipeline = Self::create_render_pipeline(&device, &config);
+        
+        debug!("Render pipeline created and ready to use.");
 
         Self {
             size,
