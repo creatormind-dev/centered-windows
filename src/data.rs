@@ -181,6 +181,14 @@ impl WindowInfo {
             return Err(GenericError::InvalidData.into());
         }
 
+        let mut buffer = [0u16; 1024];
+        let length = GetWindowTextW(hwnd, &mut buffer);
+
+        // Most windows without a title are other type of processes.
+        if length == 0 {
+            return Err(GenericError::InvalidData.into());
+        }
+
         let ex_ws_style = GetWindowLongPtrW(hwnd, GWL_EXSTYLE) as u32;
 
         // Check if the window isn't a toolbar or other type of widget.
@@ -212,16 +220,8 @@ impl WindowInfo {
             size_of::<RECT>() as u32,
         )?;
 
-        let hmonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
-        let monitor_info = MonitorInfo::build(hmonitor)?;
-        
-        let mut buffer = [0u16; 1024]; 
-        let length = GetWindowTextW(hwnd, &mut buffer);
-
-        // Same as before. Most windows without a title are other type of processes.
-        if length == 0 {
-            return Err(GenericError::InvalidData.into());
-        }
+        let monitor_handle = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+        let monitor_info = MonitorInfo::build(monitor_handle)?;
 
         Ok(Self {
             handle: hwnd,
