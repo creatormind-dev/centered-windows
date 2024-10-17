@@ -1,51 +1,57 @@
-# Centered Windows
+<h1 align="center">
+    <br />
+    <div><img src="icon.ico" alt="Centered Windows" width="200" /></div>
+    <br />
+    Centered Windows
+    <br />
+</h1>
 
-Program that repositions application windows to the center of the screen.
-Written in the C Programming Language, for the Windows OS.
+<h4 align="center">
+    A lightweight desktop application that repositions windows to the center of the screen.
+    <br />
+    Rewritten in <a href="https://www.rust-lang.org/" target="_blank">Rust</a>.
+</h4>
 
-## Downloading
+<p align="center">
+    <a href="https://github.com/creatormind-dev/centered-windows/releases/latest"><img alt="GitHub Release" src="https://img.shields.io/github/v/release/creatormind-dev/centered-windows?color=green"></a>
+    <img alt="GitHub Downloads (all assets, latest release)" src="https://img.shields.io/github/downloads/creatormind-dev/centered-windows/latest/total?color=blue">
+    <a href="https://www.gnu.org/licenses/gpl-3.0.en.html"><img alt="GitHub License" src="https://img.shields.io/github/license/creatormind-dev/centered-windows"></a>
+    <a href="https://buymeacoffee.com/creatormind"><img alt="Donate" src="https://img.shields.io/badge/%24-donate-bb5794"></a>
+</p>
 
-You can download the program by going to the [latest release](https://github.com/creatormind-dev/centered-windows/releases/latest) and downloading the `CenteredWindows.zip` file. Once downloaded, extract the contents of the `.zip` file into the folder you'd like to hold the program.
+<p align="center">
+    <a href="#download">Download</a> •
+    <a href="#to-do">To-Do</a> •
+    <a href="#support">Support</a> •
+    <a href="#license">License</a>
+</p>
 
-### Building the Source Code
+## Download
 
-This project was built and tested with the `gcc` compiler, the one included in the GNU Compilers Collection. It is recommended to build the project with the same compiler, you can download and install it with [MSYS2 and MinGW](https://www.msys2.org/).
+You can download the [latest version](https://github.com/creatormind-dev/centered-windows/releases/latest) of Centered Windows for Windows in the [releases](https://github.com/creatormind-dev/centered-windows/releases) section.
+Once downloaded, extract the `.zip` archive and run the executable.
 
-Additionally, you are required to install either the [MSYS2 MinGW Toolchain](https://www.msys2.org/wiki/MSYS2-introduction/#subsystems) or the [Windows SDK](https://developer.microsoft.com/en-us/windows/downloads/windows-sdk/). In reality, only the Windows SDK is needed, but getting the toolchain will also give you additional libraries to develop with C/C++. Alternatively, you can download [Visual Studio 2022 or Build Tools for Visual Studio 2022](https://visualstudio.microsoft.com/downloads/) and select only to install the Windows SDK.
+You may also clone the repository and build the source code yourself, if preferred. 
 
-Settings related to how the compiler will build the program can be changed in the [Makefile](Makefile) configuration, although it's better left as is, unless you know exactly what you are doing.
+## To-Do
 
-To build the program follow these steps:
-- Open a Linux subsystem terminal. The one provided by MSYS2 works fine (UCRT/MinGW).
-- Navigate to the project directory.
-- Run the `make` command.
+This is a list of features to implement / issues to be resolved:
 
-If everything goes well, you should see the `Centered Windows.exe` file appear at the root of the project. If building fails, make sure there is a `/bin` directory; if the build still fails, please report the problem using the [issue tracker](https://github.com/creatormind-dev/centered-windows/issues).
+- [ ] Add macOS and Linux support (if possible). 
+- [ ] Enable repositioning mode to be relative.
+- [ ] Allow users to change the overlay's opacity.
+- [ ] Allow for granular control of windows (pop-ups, children).
 
-## Usage and Configuration
+## Support
 
-### The Basics
-
-The program will automatically center every window that it detects. However, some of these detected "windows" may be overlays that you would probably want to avoid moving.
-
-To exclude a window/application from being centered you may use the blacklist. Simply put the name of the application (the one with the `.exe` termination) into the `blacklist.txt` file.
-You may create and name the blacklist to your liking by editing the `BlacklistFilename` option in the `Settings.ini` file.
-
-To find the name of an application you can open the Task Manager and go to the `Details` view.
-
-### Work Area and Absolute Area
-
-By default, the `UseWorkArea` option in the `Settings.ini` file is set to `true`. This means that the available space to center the applications **will** exclude the Taskbar and the Copilot sidebar.
-If you want to use the absolute area of your monitor to center the applications, simply set the previously mentioned option to `false`.
-
-### Extra Options
-
-If you prefer having a whitelist instead of a blacklist you can change the `UseWhitelist` option to `true` in the `Settings.ini` file. This will treat the defined `BlacklistFilename` file as a whitelist.
-
-Every time you run the program it will try to write information into a `log.txt` file. You can change the name of this file by editing the `LogFilename` option in the `Settings.ini` file to the one you want to use.
-
-If you want to see what the program is doing before it ends and closes itself, you can enable debug mode by changing the `DebugMode` option to `true` in the `Settings.ini` file.
+<a href="https://buymeacoffee.com/creatormind" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/purple_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
 
 ## License
 
-This project is licensed under the **Mozilla Public License Version 2.0** - see the [LICENSE](LICENSE) file for more details.
+This project is licensed under the **GNU General Public License v3** - see the [LICENSE](LICENSE.md) file for more details.
+
+---
+
+> GitHub [@creatormind-dev](https://github.com/creatormind-dev) &nbsp; &middot; &nbsp;
+> Bluesky [@creatormind.bsky.social](https://bsky.app/profile/creatormind.bsky.social) &nbsp; &middot; &nbsp;
+> Twitter [@_creatormind](https://x.com/_creatormind)

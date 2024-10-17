@@ -1,0 +1,38 @@
+cargo-features = ["different-binary-name"]
+
+[package]
+name = "centered-windows"
+version = "1.0.0"
+edition = "2021"
+license = "GPL-3"
+
+[[bin]]
+name = "centered-windows"
+filename = "Centered Windows"
+path = "src/main.rs"
+
+[dependencies]
+bytemuck = { version = "1.18.0", features = ["derive"] }
+flexi_logger = "0.29.2"
+log = "0.4.22"
+pollster = "0.3.0"
+wgpu = "22.1.0"
+winit = "0.30.5"
+
+[target.'cfg(target_os = "windows")'.dependencies.windows]
+version = "0.58.0"
+features = [
+	"Win32_Foundation",
+	"Win32_Graphics_Dwm",
+	"Win32_Graphics_Gdi",
+	"Win32_UI_WindowsAndMessaging",
+]
+
+[target.'cfg(target_os = "windows")'.build-dependencies]
+winresource = "0.1.17"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = true
