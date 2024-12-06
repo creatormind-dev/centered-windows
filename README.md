@@ -15,7 +15,7 @@
 <p align="center">
     <a href="https://github.com/creatormind-dev/centered-windows/releases/latest"><img alt="GitHub Release" src="https://img.shields.io/github/v/release/creatormind-dev/centered-windows?color=green"></a>
     <img alt="GitHub Downloads (all assets, latest release)" src="https://img.shields.io/github/downloads/creatormind-dev/centered-windows/total?color=blue">
-    <a href="https://github.com/creatormind-dev/centered-windows/LICENSE.md"><img alt="GitHub License" src="https://img.shields.io/github/license/creatormind-dev/centered-windows"></a>
+    <img alt="GitHub License" src="https://img.shields.io/github/license/creatormind-dev/centered-windows">
     <a href="https://buymeacoffee.com/creatormind"><img alt="Donate" src="https://img.shields.io/badge/%24-donate-bb5794"></a>
 </p>
 
