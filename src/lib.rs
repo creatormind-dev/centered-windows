@@ -1,8 +1,9 @@
-use std::fmt;
+mod overlay;
+pub use overlay::*;
 
-use log::{debug, info};
+use std::fmt;
 use std::error::Error;
-use std::fmt::Formatter;
+
 use winit::dpi::{PhysicalPosition, PhysicalSize};
 
 #[cfg(target_os = "windows")]
@@ -45,6 +46,38 @@ use windows::Win32::{
 };
 
 
+/// Initializes the logger.
+pub fn init_logger() -> Result<(), flexi_logger::FlexiLoggerError> {
+    let log_spec = flexi_logger::LogSpecBuilder::new()
+        .default(log::LevelFilter::Warn)
+        .module("centered_windows", log::LevelFilter::Debug)
+        .build();
+
+    let file_spec = flexi_logger::FileSpec::default()
+        .directory("log")
+        .use_timestamp(false);
+
+    flexi_logger::Logger::with(log_spec)
+        .log_to_file(file_spec)
+        .format(|writer, now, record| {
+            writer.write_fmt(format_args!(
+                "[{} {}]: {}",
+                now.now().format("%Y-%m-%d %H:%M:%S"),      // Timestamp.
+                record.level(),                             // Log Level.
+                &record.args(),                             // Message.
+            ))
+        })
+        .rotate(
+            flexi_logger::Criterion::Age(flexi_logger::Age::Day),
+            flexi_logger::Naming::TimestampsDirect,
+            flexi_logger::Cleanup::KeepLogFiles(7),
+        )
+        .start()?;
+
+    Ok(())
+}
+
+
 /**
 The GenericError enum is a common way to express that a process for window or monitor handling
 didn't go well.
@@ -57,7 +90,7 @@ enum GenericError {
 }
 
 impl fmt::Display for GenericError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Generic Data Error: {}", match self {
             Self::InvalidData => "invalid data",
         })
@@ -72,8 +105,8 @@ Represents the bounding rectangle of a quad.
 
 Not to be confused with the Windows API RECT struct.
 */
-#[repr(C)]
 #[derive(Debug, Copy, Clone, Default)]
+#[repr(C)]
 pub struct Rect {
     left: i32,
     top: i32,
@@ -156,7 +189,7 @@ pub struct WindowInfo {
 }
 
 impl fmt::Display for WindowInfo {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "{:?} ({}, {}) [{}x{}] {}",
@@ -272,7 +305,7 @@ impl WindowInfo {
             )?;
         }
         
-        debug!("Repositioned window to the center: {self}");
+        log::debug!("Repositioned window to the center: {self}");
 
         Ok(())
     }
@@ -341,7 +374,7 @@ pub fn get_windows() -> Result<Vec<WindowInfo>, Box<dyn Error>> {
     }
 
     if windows.is_empty() {
-        info!("No windows found.");
+        log::info!("No windows found.");
     }
 
     Ok(windows)
@@ -363,7 +396,7 @@ unsafe extern "system" fn window_enum_proc(hwnd: HWND, lparam: LPARAM) -> BOOL {
         return TRUE;
     }
 
-    debug!("Collected window: {window}");
+    log::debug!("Collected window: {window}");
 
     // Casting of LPARAM pointer to a Vec.
     let window_list = &mut *(lparam.0 as *mut Vec<WindowInfo>);
