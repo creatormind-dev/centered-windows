@@ -16,6 +16,8 @@ bytemuck = { version = "1.18.0", features = ["derive"] }
 flexi_logger = "0.29.2"
 log = "0.4.22"
 pollster = "0.4.0"
+serde = { version = "1.0.217", features = ["derive"]}
+serde_yaml = "0.9.33"
 wgpu = "23.0.1"
 winit = "0.30.5"
 
