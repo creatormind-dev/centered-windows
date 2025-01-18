@@ -1,9 +1,8 @@
 use pollster::FutureExt;
 use wgpu::util::DeviceExt;
 
-use crate::data::*;
+use super::*;
 
-use log::{debug, error, info, warn};
 use std::sync::Arc;
 use winit::{
     application::ApplicationHandler,
@@ -26,7 +25,6 @@ use winit::platform::windows::{CornerPreference, IconExtWindows, WindowAttribute
 
 pub struct OverlayApp<'a> {
     state: Option<State<'a>>,
-    
     windows: Vec<WindowInfo>,
 }
 
@@ -44,6 +42,15 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
         let windows = get_windows().unwrap_or_else(|e| {
             panic!("Could not enumerate application windows: {e}");
         });
+
+        // Loads the application's icon, if possible.
+        let icon = match Icon::from_path("icon.ico", None) {
+            Ok(i) => Some(i),
+            Err(e) => {
+                log::warn!("Could not load icon: {}", e);
+                None
+            }
+        };
         
         let (position, size) = Self::calculate_display_area(&event_loop);
 
@@ -64,17 +71,11 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
         let window_attributes = window_attributes
             .with_corner_preference(CornerPreference::DoNotRound)
             .with_drag_and_drop(false)
-            .with_taskbar_icon(match Icon::from_path("icon.ico", None) {
-                Ok(icon) => Some(icon),
-                Err(e) => {
-                    warn!("Could not load taskbar icon: {e}");
-                    None
-                },
-            });
+            .with_taskbar_icon(icon);
 
         let window = event_loop.create_window(window_attributes).unwrap();
         
-        debug!(
+        log::debug!(
             "Overlay window with position ({}, {}) and size [{}x{}] created.",
             position.x,
             position.y,
@@ -183,12 +184,12 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
                     }
 
                     Err(wgpu::SurfaceError::OutOfMemory) => {
-                        error!("Out of memory!");
+                        log::error!("Out of memory!");
                         event_loop.exit()
                     }
 
                     Err(wgpu::SurfaceError::Timeout) => {
-                        warn!("Surface Timeout!");
+                        log::warn!("Surface Timeout!");
                     }
                 }
             }
@@ -206,7 +207,7 @@ impl<'a> ApplicationHandler for OverlayApp<'a> {
     }
 
     fn exiting(&mut self, _event_loop: &ActiveEventLoop) {
-        info!("Termination requested. Exiting...");
+        log::info!("Termination requested. Exiting...");
     }
 }
 
@@ -311,7 +312,7 @@ impl<'a> State<'a> {
 
         let render_pipeline = Self::create_render_pipeline(&device, &config);
         
-        debug!("Render pipeline created and ready to use.");
+        log::debug!("Render pipeline created and ready to use.");
 
         Self {
             size,
@@ -391,7 +392,7 @@ impl<'a> State<'a> {
     ) -> wgpu::RenderPipeline {
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: None,
-            source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
+            source: wgpu::ShaderSource::Wgsl(include_str!("overlay.wgsl").into()),
         });
 
         let layout = device.create_pipeline_layout(
@@ -408,7 +409,7 @@ impl<'a> State<'a> {
                 layout: Some(&layout),
                 vertex: wgpu::VertexState {
                     module: &shader,
-                    entry_point: "vs_main",
+                    entry_point: Some("vs_main"),
                     compilation_options: wgpu::PipelineCompilationOptions::default(),
                     buffers: &[
                         Vertex::desc(),
@@ -416,7 +417,7 @@ impl<'a> State<'a> {
                 },
                 fragment: Some(wgpu::FragmentState {
                     module: &shader,
-                    entry_point: "fs_main",
+                    entry_point: Some("fs_main"),
                     compilation_options: wgpu::PipelineCompilationOptions::default(),
                     targets: &[
                         Some(wgpu::ColorTargetState {
@@ -488,6 +489,12 @@ impl<'a> State<'a> {
         });
 
         {
+            let preferences = Preferences::get();
+            
+            let r = preferences.overlay_color >> 16;
+            let g = (preferences.overlay_color >> 8) & 0xFF;
+            let b = preferences.overlay_color & 0xFF;
+
             let mut render_pass = encoder.begin_render_pass(
                 &wgpu::RenderPassDescriptor {
                     label: Some("Render Pass"),
@@ -498,10 +505,10 @@ impl<'a> State<'a> {
                             ops: wgpu::Operations {
                                 // Default clear color is Black with 60% opacity.
                                 load: wgpu::LoadOp::Clear(wgpu::Color {
-                                    r: 0.0,
-                                    g: 0.0,
-                                    b: 0.0,
-                                    a: 0.6,
+                                    r: r as f64 / 255.0,
+                                    g: g as f64 / 255.0,
+                                    b: b as f64 / 255.0,
+                                    a: preferences.overlay_opacity,
                                 }),
                                 store: wgpu::StoreOp::Store,
                             },

@@ -1,8 +1,11 @@
-use std::fmt;
+mod overlay;
+pub use overlay::*;
 
-use log::{debug, info};
+use std::{fmt, fs};
+
+use serde::Deserialize;
 use std::error::Error;
-use std::fmt::Formatter;
+
 use winit::dpi::{PhysicalPosition, PhysicalSize};
 
 #[cfg(target_os = "windows")]
@@ -45,19 +48,56 @@ use windows::Win32::{
 };
 
 
-/**
-The GenericError enum is a common way to express that a process for window or monitor handling
-didn't go well.
+/// The location of the preferences file, relative to the program's directory.
+const PREFERENCES_FILE: &str = "config.yml";
 
-This is more so just an indicator of an error without any actual weight.
-*/
+/// The global user-defined preferences. Accessible through the [`Preferences::get`] method.
+static mut PREFERENCES: Option<Preferences> = None;
+
+
+/// Initializes the logger.
+pub fn init_logger() -> Result<(), flexi_logger::FlexiLoggerError> {
+    let log_spec = flexi_logger::LogSpecBuilder::new()
+        .default(log::LevelFilter::Warn)
+        .module("centered_windows", log::LevelFilter::Debug)
+        .build();
+
+    let file_spec = flexi_logger::FileSpec::default()
+        .directory("log")
+        .use_timestamp(false);
+
+    flexi_logger::Logger::with(log_spec)
+        .log_to_file(file_spec)
+        .format(|writer, now, record| {
+            writer.write_fmt(format_args!(
+                "[{} {}]: {}",
+                now.now().format("%Y-%m-%d %H:%M:%S"),      // Timestamp.
+                record.level(),                             // Log Level.
+                &record.args(),                             // Message.
+            ))
+        })
+        .rotate(
+            flexi_logger::Criterion::Age(flexi_logger::Age::Day),
+            flexi_logger::Naming::TimestampsDirect,
+            flexi_logger::Cleanup::KeepLogFiles(7),
+        )
+        .start()?;
+
+    Ok(())
+}
+
+
+/// The GenericError enum is a common way to express that a process for window or monitor handling
+/// didn't go well.
+///
+/// This is more so just an indicator of an error without any actual weight.
 #[derive(Debug, Clone)]
 enum GenericError {
     InvalidData
 }
 
 impl fmt::Display for GenericError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Generic Data Error: {}", match self {
             Self::InvalidData => "invalid data",
         })
@@ -67,33 +107,21 @@ impl fmt::Display for GenericError {
 impl Error for GenericError {}
 
 
-/**
-Represents the bounding rectangle of a quad.
 
-Not to be confused with the Windows API RECT struct.
-*/
+/// Represents the bounding rectangle of a quad.
+///
+/// Not to be confused with the Windows API RECT struct.
+#[derive(Debug, Default, Copy, Clone, PartialEq)]
 #[repr(C)]
-#[derive(Debug, Copy, Clone, Default)]
 pub struct Rect {
-    left: i32,
-    top: i32,
-    right: i32,
-    bottom: i32,
-}
-
-impl PartialEq for Rect {
-    fn eq(&self, other: &Self) -> bool {
-        self.left == other.left
-        && self.top == other.top
-        && self.right == other.right
-        && self.bottom == other.bottom
-    }
+    pub left: i32,
+    pub top: i32,
+    pub right: i32,
+    pub bottom: i32,
 }
 
 impl Rect {
-    /**
-    Constructs a new Rect from a position and a size.
-    */
+    /// Constructs a new Rect from a position and a size.
     pub fn new(x: i32, y: i32, w: u32, h: u32) -> Rect {
         Self {
             left: x,
@@ -103,10 +131,8 @@ impl Rect {
         }
     }
     
-    /**
-    Given a `base` rect, a new rect is created with a transformation applied to the provided `rect`
-    so it becomes relative to the `base` rect.
-    */
+    /// Given a `base` rect, a new rect is created with a transformation applied to the provided `rect`
+    /// so it becomes relative to the `base` rect.
     pub fn adjust(rect: Rect, base: Rect) -> Rect {
         let left = rect.left - base.left;
         let top = rect.top - base.top;
@@ -121,29 +147,22 @@ impl Rect {
         }
     }
     
-    /**
-    Checks whether the given coordinate is contained by the bounding rect.
-    */
+    /// Checks whether the given coordinate is contained by the bounding rect.
     pub fn contains(&self, x: i32, y: i32) -> bool {
         x >= self.left && x < self.right && y >= self.top && y < self.bottom
     }
     
-    /**
-    Returns a tuple containing the four attributes of a rect: (left, top, right, bottom) to allow
-    for data manipulation of the bounding rect.
-    */
+    /// Returns a tuple containing the four attributes of a rect: (left, top, right, bottom) to allow
+    /// for data manipulation of the bounding rect.
     pub fn raw(&self) -> (i32, i32, i32, i32) {
         (self.left, self.top, self.right, self.bottom)
     }
 }
 
 
-/**
-Represents information for an active application window in the operating system.
- */
+/// Represents information for an active application window in the operating system.
 #[derive(Debug)]
 pub struct WindowInfo {
-    #[allow(dead_code)]
     title: String,
     
     position: PhysicalPosition<i32>,
@@ -156,7 +175,7 @@ pub struct WindowInfo {
 }
 
 impl fmt::Display for WindowInfo {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "{:?} ({}, {}) [{}x{}] {}",
@@ -170,8 +189,11 @@ impl fmt::Display for WindowInfo {
     }
 }
 
+// Windows OS specific implementations.
 #[cfg(target_os = "windows")]
 impl WindowInfo {
+    /// Constructs a new window from a given handle.
+    /// Multiple filters are applied to avoid returning invisible windows or os-specific processes.
     unsafe fn build(hwnd: HWND) -> Result<Self, Box<dyn Error>> {
         if hwnd.is_invalid() {
             return Err(GenericError::InvalidData.into());
@@ -189,6 +211,8 @@ impl WindowInfo {
             return Err(GenericError::InvalidData.into());
         }
 
+        let preferences = Preferences::get();
+
         let ex_ws_style = GetWindowLongPtrW(hwnd, GWL_EXSTYLE) as u32;
 
         // Check if the window isn't a toolbar or other type of widget.
@@ -197,10 +221,14 @@ impl WindowInfo {
         }
 
         let style = GetWindowLongPtrW(hwnd, GWL_STYLE) as u32;
-        
-        // TODO: Allow for granular control of sub-windows.
 
-        if (style & WS_CHILD.0) != 0 || (style & WS_POPUP.0) != 0 {
+        // Check if the window has a parent window.
+        if (style & WS_CHILD.0) != 0 && preferences.allow_child_ws == false {
+            return Err(GenericError::InvalidData.into());
+        }
+
+        // Check if the window can be considered a popup.
+        if (style & WS_POPUP.0) != 0 && preferences.allow_popup_ws == false {
             return Err(GenericError::InvalidData.into());
         }
 
@@ -242,6 +270,7 @@ impl WindowInfo {
 }
 
 impl WindowInfo {
+    /// Check if the window is centered.
     pub fn is_centered(&self) -> bool {
         let monitor_position = self.monitor.position;
         let monitor_size = self.monitor.size;
@@ -251,6 +280,7 @@ impl WindowInfo {
         self.position.x == x && self.position.y == y
     }
     
+    /// Tries to position the window to the center of it's corresponding monitor.
     pub fn center(&self) -> Result<(), Box<dyn Error>> {
         let monitor_position = self.monitor.position;
         let monitor_size = self.monitor.size;
@@ -259,8 +289,6 @@ impl WindowInfo {
         
         #[cfg(target_os = "windows")]
         unsafe {
-            // TODO: Figure out a way to save the window's state so it doesn't revert back when restoring.
-            
             SetWindowPos(
                 self.handle,
                 None,
@@ -272,7 +300,7 @@ impl WindowInfo {
             )?;
         }
         
-        debug!("Repositioned window to the center: {self}");
+        log::debug!("Repositioned window to the center: {self}");
 
         Ok(())
     }
@@ -288,9 +316,7 @@ impl WindowInfo {
 }
 
 
-/**
-Represents information for a display screen (monitor) detected in the system.
- */
+/// Represents information for a display screen (monitor) detected in the system.
 #[derive(Debug, Copy, Clone)]
 pub struct MonitorInfo {
     position: PhysicalPosition<i32>,
@@ -313,7 +339,13 @@ impl MonitorInfo {
             return Err(GenericError::InvalidData.into());
         }
 
-        let rect = monitor_info.rcMonitor;
+        let preferences = Preferences::get();
+
+        let rect = if preferences.use_absolute_area {
+            monitor_info.rcMonitor
+        } else {
+            monitor_info.rcWork
+        };
 
         Ok(Self {
             position: PhysicalPosition::new(rect.left, rect.top),
@@ -326,9 +358,7 @@ impl MonitorInfo {
 }
 
 
-/**
-Returns a list of the currently active and visible application windows in the operating system.
- */
+/// Returns a list of the currently active and visible application windows in the operating system.
 pub fn get_windows() -> Result<Vec<WindowInfo>, Box<dyn Error>> {
     let mut windows: Vec<WindowInfo> = Vec::new();
 
@@ -341,7 +371,7 @@ pub fn get_windows() -> Result<Vec<WindowInfo>, Box<dyn Error>> {
     }
 
     if windows.is_empty() {
-        info!("No windows found.");
+        log::info!("No windows found.");
     }
 
     Ok(windows)
@@ -363,7 +393,7 @@ unsafe extern "system" fn window_enum_proc(hwnd: HWND, lparam: LPARAM) -> BOOL {
         return TRUE;
     }
 
-    debug!("Collected window: {window}");
+    log::debug!("Collected window: {window}");
 
     // Casting of LPARAM pointer to a Vec.
     let window_list = &mut *(lparam.0 as *mut Vec<WindowInfo>);
@@ -371,4 +401,65 @@ unsafe extern "system" fn window_enum_proc(hwnd: HWND, lparam: LPARAM) -> BOOL {
     window_list.push(window);
 
     TRUE
+}
+
+
+/// Represents the user preferences, contained by the [`PREFERENCES_FILE`].
+#[derive(Debug, Deserialize)]
+pub struct Preferences {
+    pub allow_child_ws: bool,
+    pub allow_popup_ws: bool,
+    pub overlay_color: u32,
+    pub overlay_opacity: f64,
+    pub use_absolute_area: bool,
+}
+
+impl Default for Preferences {
+    fn default() -> Self {
+        Self {
+            allow_child_ws: true,
+            allow_popup_ws: false,
+            overlay_color: 0,
+            overlay_opacity: 0.6,
+            use_absolute_area: false,
+        }
+    }
+}
+
+impl Preferences {
+    /// Gets the global user-defined preferences. If the [`PREFERENCES`] variable hasn't been
+    /// initialized, it tries to read them from the [`PREFERENCES_FILE`], otherwise it just returns
+    /// the default preferences as defined by the program.
+    #[allow(static_mut_refs)]
+    pub fn get() -> &'static Self {
+        // Global preferences has a value, return it.
+        if unsafe { PREFERENCES.is_some() } {
+            return unsafe { PREFERENCES.as_ref().unwrap() }
+        }
+
+        // Try to parse the preferences.
+        let preferences = match Preferences::try_from_file(PREFERENCES_FILE) {
+            Ok(prefs) => {
+                log::info!("Loaded and parsed user preferences from \"{}\"", PREFERENCES_FILE);
+                prefs
+            }
+    
+            Err(error) => {
+                log::error!("Failed to load user preferences from \"{}\": {}", PREFERENCES_FILE, error);
+                Preferences::default()
+            }
+        };
+    
+        unsafe { PREFERENCES = Some(preferences) }
+        unsafe { PREFERENCES.as_ref().unwrap() }
+    }
+
+    /// Tries to read the preferences from the given file path.
+    /// Returns the preferences if successfull.
+    pub fn try_from_file(path: &str) -> Result<Self, Box<dyn Error>> {
+        let file = fs::File::open(path)?;
+        let data: Preferences = serde_yaml::from_reader(file)?;
+
+        Ok(data)
+    }
 }

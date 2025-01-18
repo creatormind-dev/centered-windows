@@ -2,7 +2,7 @@ cargo-features = ["different-binary-name"]
 
 [package]
 name = "centered-windows"
-version = "1.0.0"
+version = "1.1.0"
 edition = "2021"
 license = "GPL-3"
 
@@ -15,8 +15,10 @@ path = "src/main.rs"
 bytemuck = { version = "1.18.0", features = ["derive"] }
 flexi_logger = "0.29.2"
 log = "0.4.22"
-pollster = "0.3.0"
-wgpu = "22.1.0"
+pollster = "0.4.0"
+serde = { version = "1.0.217", features = ["derive"]}
+serde_yaml = "0.9.33"
+wgpu = "23.0.1"
 winit = "0.30.5"
 
 [target.'cfg(target_os = "windows")'.dependencies.windows]

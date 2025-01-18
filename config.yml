@@ -1,0 +1,22 @@
+# Whether to include child windows as an allowed window style.
+# This includes any and every window that has a parent window.
+# Default: true
+allow_child_ws: true
+
+# Whether to include popups as an allowed window style.
+# This should include dialog and confirmation boxes.
+# Note: The program may detect invisible windows if set to true.
+# Default: false
+allow_popup_ws: false
+
+# The color of the overlay.
+# Default: 0x000000 (black).
+overlay_color: 0x000000
+
+# The opacity of the overlay.
+# Default: 0.6 (60%).
+overlay_opacity: 0.6
+
+# Whether to use the entire screen area for repositioning windows.
+# Default: false
+use_absolute_area: false
