@@ -38,11 +38,16 @@ You may also clone the repository and build the source code yourself, if preferr
 This is a list of features to implement / issues to be resolved:
 
 - [ ] Add macOS and Linux support (if possible). 
-- [ ] Enable repositioning mode to be relative.
-- [ ] Allow users to change the overlay's opacity.
-- [ ] Allow for granular control of windows (pop-ups, children).
+- [x] Enable repositioning mode to be relative.
+- [x] Allow users to change the overlay's opacity.
+- [x] Allow for granular control of windows (pop-ups, children).
+
+If you encounter any problems while using this software or would like to request
+a specific feature to be added, use the [issue tracker](https://github.com/creatormind-dev/centered-windows/issues).
 
 ## Support
+
+If this has been of use to you consider supporting me, it is greatly appreciated!
 
 <a href="https://buymeacoffee.com/creatormind" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/purple_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
 
@@ -53,5 +58,4 @@ This project is licensed under the **GNU General Public License v3** - see the [
 ---
 
 > GitHub [@creatormind-dev](https://github.com/creatormind-dev) &nbsp; &middot; &nbsp;
-> Bluesky [@creatormind.bsky.social](https://bsky.app/profile/creatormind.bsky.social) &nbsp; &middot; &nbsp;
-> Twitter [@_creatormind](https://x.com/_creatormind)
+> Bluesky [@creatormind.bsky.social](https://bsky.app/profile/creatormind.bsky.social)
